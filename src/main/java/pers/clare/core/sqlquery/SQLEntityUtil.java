@@ -12,12 +12,15 @@ import java.util.Map;
 
 public class SQLEntityUtil {
 
+    public static <T> int setValue(PreparedStatement ps, T entity, Method[] methods) throws IllegalAccessException, SQLException, InvocationTargetException {
+        return setValue(ps, entity, methods, 1);
+    }
 
-    public static <T> void setValue(PreparedStatement ps, T entity, Method[] methods) throws IllegalAccessException, SQLException, InvocationTargetException {
-        int c = 1;
+    public static <T> int setValue(PreparedStatement ps, T entity, Method[] methods, int index) throws IllegalAccessException, SQLException, InvocationTargetException {
         for (Method f : methods) {
-            ps.setObject(c++, f.invoke(entity));
+            ps.setObject(index++, f.invoke(entity));
         }
+        return index;
     }
 
     public static <T> T toInstance(Map<Integer, Constructor<T>> constructorMap, ResultSet rs) throws Exception {
@@ -40,7 +43,7 @@ public class SQLEntityUtil {
         Parameter[] parameters = constructor.getParameters();
         Object[] values = new Object[l];
         for (int i = 0; i < l; i++) {
-            values[i] = rs.getObject(i, parameters[i].getType());
+            values[i] = rs.getObject(i + 1, parameters[i].getType());
         }
         return constructor.newInstance(values);
     }
@@ -50,7 +53,7 @@ public class SQLEntityUtil {
         if (constructor != null) return constructor;
         StringBuilder columns = new StringBuilder("(");
         for (int i = 0, l = metaData.getColumnCount(); i < l; i++) {
-            columns.append(metaData.getColumnName(i));
+            columns.append(metaData.getColumnName(i + 1));
             columns.append(',');
         }
         columns.replace(columns.length() - 1, columns.length(), ")");

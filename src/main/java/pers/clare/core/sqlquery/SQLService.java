@@ -20,6 +20,8 @@ public class SQLService {
     protected DataSource write;
     protected DataSource read;
 
+    protected boolean hasRead;
+
     public SQLService(DataSource write) {
         this.write = write;
         this.read = write;
@@ -31,10 +33,15 @@ public class SQLService {
     ) {
         this.write = write;
         this.read = read;
+        hasRead = write != read;
     }
 
     public DataSource getDataSource(boolean readonly) {
         return readonly ? read : write;
+    }
+
+    protected boolean retry(Object result, boolean readonly) {
+        return result == null && readonly && hasRead;
     }
 
     public Map<String, Object> find(
@@ -52,7 +59,11 @@ public class SQLService {
         try (
                 Connection conn = getDataSource(readonly).getConnection();
         ) {
-            return ResultSetUtil.toMap(PreparedStatementUtil.create(conn, sql, parameters).executeQuery());
+            Map<String, Object> result = ResultSetUtil.toMap(PreparedStatementUtil.create(conn, sql, parameters).executeQuery());
+            if (retry(result, readonly)) {
+                return find(false, sql, parameters);
+            }
+            return result;
         } catch (Exception e) {
             throw new SQLQueryException(e.getMessage(), e);
         }
@@ -75,7 +86,11 @@ public class SQLService {
         try (
                 Connection conn = getDataSource(readonly).getConnection();
         ) {
-            return ResultSetUtil.to(clazz, PreparedStatementUtil.create(conn, sql, parameters).executeQuery());
+            T result = ResultSetUtil.to(clazz, PreparedStatementUtil.create(conn, sql, parameters).executeQuery());
+            if (retry(result, readonly)) {
+                return findFirst(false, clazz, sql, parameters);
+            }
+            return result;
         } catch (Exception e) {
             throw new SQLQueryException(e.getMessage(), e);
         }

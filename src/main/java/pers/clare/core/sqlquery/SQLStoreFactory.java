@@ -1,7 +1,7 @@
 package pers.clare.core.sqlquery;
 
-import pers.clare.AccessLog;
 import pers.clare.core.util.Asserts;
+import sun.reflect.FieldAccessor;
 
 import javax.persistence.Column;
 import javax.persistence.GeneratedValue;
@@ -9,6 +9,7 @@ import javax.persistence.Id;
 import javax.persistence.Transient;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
@@ -19,7 +20,7 @@ public interface SQLStoreFactory {
 
     public static <T> SQLStore<T> find(Class<T> clazz) {
         SQLStore entity = entityMap.get(clazz);
-        Asserts.notNull(entity, "%s is't build SQLEntity", clazz.getName());
+        Asserts.notNull(entity, "%s is't build SQLStore", clazz.getName());
         return entity;
     }
 
@@ -41,10 +42,10 @@ public interface SQLStoreFactory {
             StringBuilder updateSet = new StringBuilder();
             Field[] fields = clazz.getDeclaredFields();
             int length = fields.length;
-            int i = 0, insertCount = 0, updateCount = 0, deleteCount = 0;
+            int i = 0, keyCount = 0, insertCount = 0, updateCount = 0;
+            Method[] keyMethods = new Method[length];
             Method[] insertMethods = new Method[length];
             Method[] updateMethods = new Method[length];
-            Method[] deleteMethods = new Method[length];
             Column column;
             Id id;
             String name, getterName;
@@ -57,6 +58,7 @@ public interface SQLStoreFactory {
                 }
             }
             Field autoKey = null;
+            FieldAccessor autoKey2 = null;
             Method method;
             for (Field field : fields) {
                 if (field.getAnnotation(Transient.class) != null) continue;
@@ -90,13 +92,15 @@ public interface SQLStoreFactory {
                     }
                 } else {
                     if (field.getAnnotation(GeneratedValue.class) == null) {
-                        autoKey = field;
                         insertMethods[insertCount++] = method;
                         insertColumns.append(name)
                                 .append(',');
                         values.append("?,");
+                    } else {
+                        autoKey = field;
+                        autoKey2 = (FieldAccessor) getFieldAccessor(clazz, field);
                     }
-                    deleteMethods[deleteCount++] = method;
+                    keyMethods[keyCount++] = method;
                     whereId.append(name)
                             .append("=? and ");
                 }
@@ -110,15 +114,15 @@ public interface SQLStoreFactory {
             temp = updateMethods;
             updateMethods = new Method[updateCount];
             System.arraycopy(temp, 0, updateMethods, 0, updateCount);
-            temp = deleteMethods;
-            deleteMethods = new Method[deleteCount];
-            System.arraycopy(temp, 0, deleteMethods, 0, deleteCount);
+            temp = keyMethods;
+            keyMethods = new Method[keyCount];
+            System.arraycopy(temp, 0, keyMethods, 0, keyCount);
 
             selectColumns.delete(selectColumns.length() - 1, selectColumns.length());
             insertColumns.delete(insertColumns.length() - 1, insertColumns.length());
             values.replace(values.length() - 1, values.length(), ")");
             updateSet.delete(updateSet.length() - 1, updateSet.length());
-            whereId.delete(whereId.length() - 5, updateSet.length());
+            whereId.delete(whereId.length() - 5, whereId.length());
 
             int tl = tableName.length(), scl = selectColumns.length(), icl = insertColumns.length(), vl = values.length(), ul = updateSet.length(), wl = whereId.length();
             char[] chars;
@@ -177,10 +181,10 @@ public interface SQLStoreFactory {
             String update = new String(chars);
 
             // delete
-            chars = new char[12 + tl + ul + wl];
+            chars = new char[12 + tl  + wl];
             index = 0;
             "delete from ".getChars(0, 12, chars, index);
-            index += 7;
+            index += 12;
             tableName.getChars(0, tl, chars, index);
             index += tl;
             whereId.getChars(0, wl, chars, index);
@@ -189,7 +193,7 @@ public interface SQLStoreFactory {
 //            System.out.println(insert);
 //            System.out.println(update);
 //            System.out.println(delete);
-            entity = new SQLStore(constructorMap, crud, autoKey, insertMethods, updateMethods, deleteMethods, count, select, insert, update, delete);
+            entity = new SQLStore(constructorMap, crud, autoKey, autoKey2, keyMethods, insertMethods, updateMethods, count, select, insert, update, delete);
         } else {
             entity = new SQLStore(constructorMap);
         }
@@ -197,7 +201,14 @@ public interface SQLStoreFactory {
         return entity;
     }
 
-    public static void main(String[] args) {
-        build(AccessLog.class,true);
+    static <T> Object getFieldAccessor(Class<T> clazz, Field field) {
+        try {
+            Method method = Field.class.getDeclaredMethod("getFieldAccessor", Object.class);
+            method.setAccessible(true);
+            return method.invoke(field, clazz.getConstructor().newInstance());
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | InstantiationException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }

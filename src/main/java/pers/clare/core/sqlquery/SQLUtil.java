@@ -116,7 +116,7 @@ public abstract class SQLUtil {
             }
         }
         rs[index++] = '`';
-        return new String(rs, 0, index + 1);
+        return new String(rs, 0, index);
     }
 
     public static String toGetterName(String name) {

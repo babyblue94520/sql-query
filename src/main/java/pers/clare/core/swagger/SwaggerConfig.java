@@ -35,14 +35,6 @@ import static springfox.documentation.schema.AlternateTypeRules.newRule;
 public class SwaggerConfig {
     private List<ResponseMessage> responseMessages = new ArrayList<>();
 
-    {
-        responseMessages.add(new ResponseMessageBuilder().code(400).message("Bad Request").responseModel(new ModelRef("ResultErrors")).build());
-        responseMessages.add(new ResponseMessageBuilder().code(401).message("Unauthorized").responseModel(new ModelRef("ResultFail")).build());
-        responseMessages.add(new ResponseMessageBuilder().code(403).message("Forbidden").responseModel(new ModelRef("ResultFail")).build());
-        responseMessages.add(new ResponseMessageBuilder().code(500).message("Internal Server Error").responseModel(new ModelRef("ResultFail")).build());
-    }
-
-
     @Bean
     public Docket docket(TypeResolver typeResolver) {
         return new Docket(DocumentationType.SWAGGER_2)

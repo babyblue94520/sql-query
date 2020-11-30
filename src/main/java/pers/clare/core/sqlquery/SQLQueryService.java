@@ -30,7 +30,7 @@ public class SQLQueryService extends SQLService {
         super(write, read);
     }
 
-    public <T> T find(
+    public <T> T findFirst(
             Class<T> clazz
             , SQLQuery query
     ) {
@@ -62,14 +62,15 @@ public class SQLQueryService extends SQLService {
     }
 
     public <T> T find(
-            SQLStore<T> sqlStore
+            Class<T> clazz
             , SQLQuery query
     ) {
         try (
                 Connection conn = write.getConnection();
         ) {
+            SQLStore<T> store = SQLStoreFactory.find(clazz);
             PreparedStatement ps = SQLQueryPSUtil.create(conn, query);
-            return SQLEntityUtil.toInstance(sqlStore.constructorMap, ps.executeQuery());
+            return SQLEntityUtil.toInstance(store.constructorMap, ps.executeQuery());
         } catch (Exception e) {
             throw new SQLQueryException(e.getMessage(), e);
         }
@@ -124,7 +125,7 @@ public class SQLQueryService extends SQLService {
         }
     }
 
-    public <T> List<T> findAll(
+    public <T> List<T> findAllFirst(
             Class<T> clazz
             , SQLQuery query
     ) {
@@ -143,77 +144,55 @@ public class SQLQueryService extends SQLService {
         }
     }
 
-    /**
-     * 使用SQLQuery查詢
-     *
-     * @param sqlStore 類別解析器
-     * @param query    SQLQuery
-     * @return the list
-     */
     public <T> List<T> findAll(
-            SQLStore<T> sqlStore
+            Class<T> clazz
             , SQLQuery query
     ) {
         try (
                 Connection conn = write.getConnection();
         ) {
+            SQLStore<T> store = SQLStoreFactory.find(clazz);
             PreparedStatement ps = SQLQueryPSUtil.create(conn, query);
-            return SQLEntityUtil.toInstances(sqlStore.constructorMap, ps.executeQuery());
+            return SQLEntityUtil.toInstances(store.constructorMap, ps.executeQuery());
         } catch (Exception e) {
             throw new SQLQueryException(e.getMessage(), e);
         }
     }
 
-
-    /**
-     * 使用SQLQuery 排序查詢
-     *
-     * @param query SQLQuery
-     * @param sort  排序
-     * @return the list
-     */
     public <T> List<T> findAll(
-            SQLStore<T> sqlStore
+            Class<T> clazz
             , SQLQuery query
             , Sort sort
     ) {
         try (
                 Connection conn = write.getConnection();
         ) {
-            return SQLEntityUtil.toInstances(sqlStore.constructorMap, SQLQueryPSUtil.create(conn, query, sort).executeQuery());
+            SQLStore<T> store = SQLStoreFactory.find(clazz);
+            return SQLEntityUtil.toInstances(store.constructorMap, SQLQueryPSUtil.create(conn, query, sort).executeQuery());
         } catch (Exception e) {
             throw new SQLQueryException(e.getMessage(), e);
         }
     }
 
-
-    /**
-     * 使用SQLQuery 分頁查詢.
-     *
-     * @param sqlStore 類別解析器
-     * @param query    SQLQuery
-     * @param pageable pageable
-     * @return the page
-     */
     public <T> Page<T> findAll(
-            SQLStore<T> sqlStore
+            Class<T> clazz
             , SQLQuery query
             , Pageable pageable
     ) {
         try (
                 Connection conn = write.getConnection();
         ) {
+            SQLStore<T> store = SQLStoreFactory.find(clazz);
             String sql = query.toString();
-            List<T> list = SQLEntityUtil.toInstances(sqlStore.constructorMap, SQLQueryPSUtil.create(conn, sql, query, pageable).executeQuery());
-            if (list.size() < pageable.getPageSize()) {
+            List<T> list = SQLEntityUtil.toInstances(store.constructorMap, SQLQueryPSUtil.create(conn, sql, query, pageable).executeQuery());
+            if (list.size() <= pageable.getPageSize()) {
                 return new PageImpl<>(list, pageable, list.size());
             }
             PreparedStatement ps = conn.prepareStatement(SQLUtil.buildTotalSQL(sql));
             SQLQueryPSUtil.setValue(ps, query.values);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
-                long total = rs.getLong(1);
-                return new PageImpl<>(list, pageable, total);
+                return new PageImpl<>(list, pageable, rs.getLong(1));
             }
             throw new SQLQueryException("query total error");
         } catch (Exception e) {
@@ -228,7 +207,7 @@ public class SQLQueryService extends SQLService {
         try (
                 Connection conn = write.getConnection();
         ) {
-            PreparedStatement ps = SQLQueryPSUtil.create(conn, query);
+            PreparedStatement ps = SQLQueryPSUtil.createInsert(conn, query);
             ps.executeUpdate();
             ResultSet rs = ps.getGeneratedKeys();
             return rs.next() ? rs.getObject(1, keyType) : null;

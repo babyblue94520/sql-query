@@ -1,8 +1,9 @@
 package pers.clare.demo.data;
 
 
+import org.springframework.data.jpa.repository.support.JpaRepositoryFactoryBean;
+import org.springframework.data.repository.config.RepositoryConfigurationDelegate;
 import pers.clare.core.data.repository.ExtendedRepositoryImpl;
-import pers.clare.core.sqlquery.SQLQueryService;
 import com.zaxxer.hikari.HikariDataSource;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,14 +24,14 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
 
-@Configuration(DataSourceConfig.BeanName)
+@Configuration(DemoDataSourceConfig.BeanName)
 @EnableJpaRepositories(
-        entityManagerFactoryRef = DataSourceConfig.EntityManagerFactoryName
-        , transactionManagerRef = DataSourceConfig.TransactionManagerName
-        , basePackages = {DataSourceConfig.BasePackages}
+        entityManagerFactoryRef = DemoDataSourceConfig.EntityManagerFactoryName
+        , transactionManagerRef = DemoDataSourceConfig.TransactionManagerName
+        , basePackages = {DemoDataSourceConfig.BasePackages}
         , repositoryBaseClass = ExtendedRepositoryImpl.class
 )
-public class DataSourceConfig {
+public class DemoDataSourceConfig {
     public static final String Prefix = "demo";
     public static final String BasePackages = "pers.clare." + Prefix + ".data.repository";
     public static final String[] EntityPackages = {
@@ -46,7 +47,6 @@ public class DataSourceConfig {
     public static final String EntityManagerName = Prefix + "EntityManager";
     public static final String PersistenceUnitName = Prefix + "PersistenceUnit";
 
-    public static final String SQLQueryServiceName = Prefix + "SQLQueryService";
 
     @Primary
     @Bean(name = DataSourceName)
@@ -91,11 +91,5 @@ public class DataSourceConfig {
             @Qualifier(EntityManagerFactoryName) FactoryBean<EntityManagerFactory> entityManagerFactory
     ) throws Exception {
         return new JpaTransactionManager(entityManagerFactory.getObject());
-    }
-
-    @Primary
-    @Bean(name = SQLQueryServiceName)
-    public SQLQueryService sqlQueryService(@Qualifier(DataSourceName) DataSource dataSource) {
-        return new SQLQueryService(dataSource);
     }
 }

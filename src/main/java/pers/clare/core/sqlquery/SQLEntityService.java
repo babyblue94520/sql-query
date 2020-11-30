@@ -1,15 +1,10 @@
 package pers.clare.core.sqlquery;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.experimental.FieldNameConstants;
 import lombok.extern.log4j.Log4j2;
 import pers.clare.core.sqlquery.exception.SQLQueryException;
 
 import javax.sql.DataSource;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.sql.*;
 
 
@@ -25,37 +20,80 @@ public class SQLEntityService extends SQLService {
     }
 
     public <T> long count(
-            T obj
+            T entity
     ) {
-        return count(obj.getClass());
+        return count(false, entity);
     }
 
     public <T> long count(
-            Class<T> clazz
-            , Object... args
+            boolean readonly
+            , T entity
     ) {
-        return count(SQLStoreFactory.find(clazz), args);
+        SQLStore<T> store = SQLStoreFactory.find((Class<T>) entity.getClass());
+        try (
+                Connection conn = getDataSource(readonly).getConnection();
+        ) {
+            PreparedStatement ps = conn.prepareStatement(store.count);
+            SQLEntityUtil.setValue(ps, entity, store.keyMethods);
+            Long count = ResultSetUtil.to(Long.class, ps.executeQuery());
+            if (retry(count, readonly)) {
+                return count(false, entity);
+            }
+            return count == null ? 0L : count;
+        } catch (Exception e) {
+            throw new SQLQueryException(e.getMessage(), e);
+        }
     }
 
-    public <T> long count(
-            SQLStore<T> store
-            , Object... args
+    public <T> T find(
+            T entity
     ) {
-        Long count = findFirst(Long.class, store.count, args);
-        return count == null ? 0 : count;
+        return find(false, entity);
+    }
+
+    public <T> T find(
+            boolean readonly
+            , T entity
+    ) {
+        try (
+                Connection conn = getDataSource(readonly).getConnection();
+        ) {
+            SQLStore<T> store = SQLStoreFactory.find((Class<T>) entity.getClass());
+            PreparedStatement ps = conn.prepareStatement(store.select);
+            SQLEntityUtil.setValue(ps, entity, store.keyMethods);
+            T result = SQLEntityUtil.toInstance(store.constructorMap, ps.executeQuery());
+            if (retry(result, readonly)) {
+                return find(false, entity);
+            }
+            return result;
+        } catch (Exception e) {
+            throw new SQLQueryException(e.getMessage(), e);
+        }
     }
 
     public <T> T find(
             Class<T> clazz
             , Object... args
     ) {
+        return find(false, clazz, args);
+    }
+
+    public <T> T find(
+            boolean readonly
+            , Class<T> clazz
+            , Object... args
+    ) {
         try (
-                Connection conn = write.getConnection();
+                Connection conn = getDataSource(readonly).getConnection();
         ) {
             SQLStore<T> store = SQLStoreFactory.find(clazz);
             PreparedStatement ps = conn.prepareStatement(store.select);
             PreparedStatementUtil.setValue(ps, args);
-            return SQLEntityUtil.toInstance(store.constructorMap, ps.executeQuery());
+            T result = SQLEntityUtil.toInstance(store.constructorMap, ps.executeQuery());
+            if (retry(result, readonly)) {
+                return find(false, clazz, args);
+            }
+            return result;
         } catch (Exception e) {
             throw new SQLQueryException(e.getMessage(), e);
         }
@@ -67,22 +105,14 @@ public class SQLEntityService extends SQLService {
         try (
                 Connection conn = write.getConnection();
         ) {
-            SQLStore<T> store = (SQLStore<T>) SQLStoreFactory.find(entity.getClass());
-            PreparedStatement ps;
-//            if (store.autoKey == null) {
-//                ps = conn.prepareStatement(store.insert);
-//            } else {
-                ps = conn.prepareStatement(store.insert, Statement.RETURN_GENERATED_KEYS);
-//            }
+            SQLStore<T> store = SQLStoreFactory.find((Class<T>) entity.getClass());
+            PreparedStatement ps = conn.prepareStatement(store.insert, Statement.RETURN_GENERATED_KEYS);
             SQLEntityUtil.setValue(ps, entity, store.insertMethods);
             ps.executeUpdate();
             if (store.autoKey != null) {
                 ResultSet rs = ps.getGeneratedKeys();
                 if (rs.next()) {
-                    boolean accessible = store.autoKey.canAccess(entity);
-                    store.autoKey.setAccessible(true);
-                    store.autoKey.set(entity, rs.getObject(1, store.autoKey.getType()));
-                    store.autoKey.setAccessible(accessible);
+                    store.autoKeyAccessor.set(entity, rs.getObject(1, store.autoKey.getType()));
                 }
             }
             return entity;
@@ -97,9 +127,10 @@ public class SQLEntityService extends SQLService {
         try (
                 Connection conn = write.getConnection();
         ) {
-            SQLStore<T> store = (SQLStore<T>) SQLStoreFactory.find(entity.getClass());
+            SQLStore<T> store = SQLStoreFactory.find((Class<T>) entity.getClass());
             PreparedStatement ps = conn.prepareStatement(store.update);
-            SQLEntityUtil.setValue(ps, entity, store.updateMethods);
+            int index = SQLEntityUtil.setValue(ps, entity, store.updateMethods, 1);
+            SQLEntityUtil.setValue(ps, entity, store.keyMethods, index);
             return ps.executeUpdate();
         } catch (SQLException | IllegalAccessException | InvocationTargetException e) {
             throw new SQLQueryException(e.getMessage(), e);
@@ -112,55 +143,28 @@ public class SQLEntityService extends SQLService {
         try (
                 Connection conn = write.getConnection();
         ) {
-            SQLStore<T> store = (SQLStore<T>) SQLStoreFactory.find(entity.getClass());
+            SQLStore<T> store = SQLStoreFactory.find((Class<T>) entity.getClass());
             PreparedStatement ps = conn.prepareStatement(store.delete);
-            SQLEntityUtil.setValue(ps, entity, store.deleteMethods);
+            SQLEntityUtil.setValue(ps, entity, store.keyMethods);
             return ps.executeUpdate();
         } catch (SQLException | IllegalAccessException | InvocationTargetException e) {
             throw new SQLQueryException(e.getMessage(), e);
         }
     }
 
-    public static void main(String[] args) throws InvocationTargetException, NoSuchMethodException, IllegalAccessException, NoSuchFieldException {
-        Test test = new Test("test");
-        for (int i = 0; i < 10; i++) {
-            run(test);
+    public <T> int delete(
+            Class<T> clazz
+            ,Object ...args
+    ) {
+        try (
+                Connection conn = write.getConnection();
+        ) {
+            SQLStore<T> store = SQLStoreFactory.find(clazz);
+            PreparedStatement ps = conn.prepareStatement(store.delete);
+            PreparedStatementUtil.setValue(ps, args);
+            return ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new SQLQueryException(e.getMessage(), e);
         }
-    }
-
-    public static void run(Test test) throws NoSuchFieldException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
-        int max = 100000;
-        Object name;
-        Method method = test.getClass().getMethod("getName");
-        Field field = test.getClass().getDeclaredField("name");
-        field.setAccessible(true);
-        long t = System.currentTimeMillis();
-        for (int i = 0; i < max; i++) {
-            name = test.getName();
-        }
-        System.out.println(System.currentTimeMillis() - t);
-        t = System.currentTimeMillis();
-        for (int i = 0; i < max; i++) {
-            name = test.name;
-        }
-        System.out.println(System.currentTimeMillis() - t);
-        t = System.currentTimeMillis();
-        for (int i = 0; i < max; i++) {
-            name = field.get(test);
-        }
-        System.out.println(System.currentTimeMillis() - t);
-        t = System.currentTimeMillis();
-        for (int i = 0; i < max; i++) {
-            name = method.invoke(test);
-        }
-        System.out.println(System.currentTimeMillis() - t);
-        System.out.println("====================");
-    }
-
-    @Getter
-    @AllArgsConstructor
-    @FieldNameConstants
-    static class Test {
-        private String name;
     }
 }

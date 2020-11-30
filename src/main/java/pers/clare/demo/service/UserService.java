@@ -1,6 +1,7 @@
 package pers.clare.demo.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -8,8 +9,10 @@ import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import pers.clare.core.sqlquery.*;
 import pers.clare.core.sqlquery.annotation.Sql;
+import pers.clare.demo.data.SQLQueryConfig;
 import pers.clare.demo.data.entity.User;
 
+import javax.annotation.Resource;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
@@ -27,22 +30,12 @@ public class UserService {
     private static final int PASSWORD_MIN_LENGTH = 8;
 
     @Sql
-    private SQLQueryReplaceBuilder combobox;
-    @Sql
     private SQLQueryReplaceBuilder findAll;
-    @Sql
-    private SQLQueryReplaceBuilder findAllStatusCount;
-    @Sql
-    private SQLQueryReplaceBuilder findUserCount;
-    @Sql
-    private SQLQueryReplaceBuilder findAllSimple;
-    @Sql
-    private String findSimple;
-    @Sql
-    private SQLQueryBuilder verifyPermission;
-    @Sql
-    private SQLQueryBuilder update;
 
+    @Autowired
+    private SQLEntityService sqlEntityService;
+
+    @Autowired
     private SQLQueryService sqlQueryService;
 
     {
@@ -75,7 +68,11 @@ public class UserService {
                 .value("name", name)
                 .value("roleId", roleId)
                 .value("account", account);
-        return sqlQueryService.findAll(User.Entity, query, pageable);
+        return sqlQueryService.findAll(User.class, query, pageable);
+    }
+
+    public User find(Long id) {
+        return sqlEntityService.find(User.class, id);
     }
 
     public User insert(
@@ -88,14 +85,14 @@ public class UserService {
         user.setCreateTime(t);
         user.setCreateUser(1L);
         user.setLoginFailCount(0);
-//        sqlQueryService.insert(User.Entity,user);
-        return user;
+        sqlEntityService.insert(user);
+        return sqlEntityService.find(User.class, user.getId());
     }
 
-    public void modify(
+    public int update(
             @Valid @NotNull(message = "{manage.User.NotNull}") User user
     ) {
-//        sqlQueryService.update(User.Entity,user);
+        return sqlEntityService.update(user);
     }
 
 }

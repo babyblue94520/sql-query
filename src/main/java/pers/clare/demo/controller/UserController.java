@@ -1,10 +1,9 @@
 package pers.clare.demo.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.web.bind.annotation.*;
 import pers.clare.core.sqlquery.SQLQueryService;
 import pers.clare.demo.data.entity.User;
 import pers.clare.demo.data.repository.UserRepository;
@@ -18,18 +17,19 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    @Autowired
-    private SQLQueryService sqlQueryService;
+    @GetMapping
+    public Page<User> findAll(Pageable pageable) {
+        return userService.findAll(pageable, null, null, null, null);
+    }
 
-//    @GetMapping
-//    public List<User> findAll() {
-//        return userService.findAll();
-//    }
-//
-//    @PatchMapping("name")
-//    public Integer update(Long id, String name) {
-//        return userService.update(id, name);
-//    }
+    @PostMapping("name")
+    public User add(User user) {
+        return userService.insert(user);
+    }
+    @PatchMapping("name")
+    public Integer modify(User user) {
+        return userService.update(user);
+    }
 //
 //    @PatchMapping("name2")
 //    public Integer update2(Long id, String name) {
