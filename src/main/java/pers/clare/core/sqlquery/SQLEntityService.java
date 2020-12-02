@@ -112,7 +112,7 @@ public class SQLEntityService extends SQLService {
             if (store.autoKey != null) {
                 ResultSet rs = ps.getGeneratedKeys();
                 if (rs.next()) {
-                    store.autoKeyAccessor.set(entity, rs.getObject(1, store.autoKey.getType()));
+                    store.autoKey.set(entity, rs.getObject(1, store.autoKey.getType()));
                 }
             }
             return entity;

@@ -1,6 +1,8 @@
 package pers.clare.demo.data.entity;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import pers.clare.core.sqlquery.SQLStore;
 import pers.clare.core.sqlquery.SQLStoreFactory;
@@ -12,6 +14,7 @@ import javax.persistence.Id;
 
 @Getter
 @Setter
+@AllArgsConstructor
 @Entity
 public class Test {
     public static final SQLStore STORE = SQLStoreFactory.build(Test.class, true);
@@ -22,13 +25,7 @@ public class Test {
 
     private String name;
 
-    public Test() {
+    public Test(){
         this.id = null;
-        this.name = null;
-    }
-
-    public Test(Long id, String name) {
-        this.id = id;
-        this.name = name;
     }
 }

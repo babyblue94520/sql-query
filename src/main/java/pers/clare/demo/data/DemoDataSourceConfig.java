@@ -1,8 +1,7 @@
 package pers.clare.demo.data;
 
 
-import org.springframework.data.jpa.repository.support.JpaRepositoryFactoryBean;
-import org.springframework.data.repository.config.RepositoryConfigurationDelegate;
+import org.springframework.context.annotation.Profile;
 import pers.clare.core.data.repository.ExtendedRepositoryImpl;
 import com.zaxxer.hikari.HikariDataSource;
 import org.springframework.beans.factory.FactoryBean;
@@ -24,6 +23,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
 
+@Profile("mysql")
 @Configuration(DemoDataSourceConfig.BeanName)
 @EnableJpaRepositories(
         entityManagerFactoryRef = DemoDataSourceConfig.EntityManagerFactoryName

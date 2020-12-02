@@ -1,7 +1,6 @@
 package pers.clare.core.sqlquery;
 
 import pers.clare.core.util.Asserts;
-import sun.reflect.FieldAccessor;
 
 import javax.persistence.Column;
 import javax.persistence.GeneratedValue;
@@ -9,7 +8,6 @@ import javax.persistence.Id;
 import javax.persistence.Transient;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
@@ -42,7 +40,7 @@ public interface SQLStoreFactory {
             StringBuilder updateSet = new StringBuilder();
             Field[] fields = clazz.getDeclaredFields();
             int length = fields.length;
-            int i = 0, keyCount = 0, insertCount = 0, updateCount = 0;
+            int keyCount = 0, insertCount = 0, updateCount = 0;
             Method[] keyMethods = new Method[length];
             Method[] insertMethods = new Method[length];
             Method[] updateMethods = new Method[length];
@@ -58,7 +56,6 @@ public interface SQLStoreFactory {
                 }
             }
             Field autoKey = null;
-            FieldAccessor autoKey2 = null;
             Method method;
             for (Field field : fields) {
                 if (field.getAnnotation(Transient.class) != null) continue;
@@ -98,7 +95,7 @@ public interface SQLStoreFactory {
                         values.append("?,");
                     } else {
                         autoKey = field;
-                        autoKey2 = (FieldAccessor) getFieldAccessor(clazz, field);
+                        autoKey.setAccessible(true);
                     }
                     keyMethods[keyCount++] = method;
                     whereId.append(name)
@@ -153,10 +150,10 @@ public interface SQLStoreFactory {
             String select = new String(chars);
 
             // insert
-            chars = new char[9 + tl + icl + vl];
+            chars = new char[14 + tl + icl + vl];
             index = 0;
-            "insert into ".getChars(0, 7, chars, index);
-            index += 7;
+            "insert into ".getChars(0, 12, chars, index);
+            index += 12;
             tableName.getChars(0, tl, chars, index);
             index += tl;
             chars[index++] = '(';
@@ -193,22 +190,11 @@ public interface SQLStoreFactory {
 //            System.out.println(insert);
 //            System.out.println(update);
 //            System.out.println(delete);
-            entity = new SQLStore(constructorMap, crud, autoKey, autoKey2, keyMethods, insertMethods, updateMethods, count, select, insert, update, delete);
+            entity = new SQLStore(constructorMap, crud, autoKey, keyMethods, insertMethods, updateMethods, count, select, insert, update, delete);
         } else {
             entity = new SQLStore(constructorMap);
         }
         entityMap.put(clazz, entity);
         return entity;
-    }
-
-    static <T> Object getFieldAccessor(Class<T> clazz, Field field) {
-        try {
-            Method method = Field.class.getDeclaredMethod("getFieldAccessor", Object.class);
-            method.setAccessible(true);
-            return method.invoke(field, clazz.getConstructor().newInstance());
-        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | InstantiationException e) {
-            e.printStackTrace();
-        }
-        return null;
     }
 }

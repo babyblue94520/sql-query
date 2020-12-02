@@ -1,0 +1,24 @@
+spring:
+  datasource:
+    demo:
+      type: com.zaxxer.hikari.HikariDataSource
+#      jdbc-url: jdbc:mysql://192.168.1.110:3306/schedule?useSSL=false&useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC&cachePrepStmts=true&useServerPrepStmts=true
+      jdbc-url: jdbc:mysql://192.168.1.100:3306/schedule?useSSL=false
+#      jdbc-url: jdbc:mysql://192.168.1.110:3306/schedule?useSSL=false&useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC&useServerPrepStmts=true
+      username: root
+      password: 123456
+      minimum-idle: 1
+      maximum-pool-size: 10
+      idle-timeout: 300000
+      max-lifetime: 1200000
+    slave:
+      type: com.zaxxer.hikari.HikariDataSource
+      #      jdbc-url: jdbc:mysql://192.168.1.110:3306/schedule?useSSL=false&useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC&cachePrepStmts=true&useServerPrepStmts=true
+      jdbc-url: jdbc:mysql://192.168.1.100:33061/schedule?useSSL=false
+      #      jdbc-url: jdbc:mysql://192.168.1.110:3306/schedule?useSSL=false&useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC&useServerPrepStmts=true
+      username: root
+      password: 123456
+      minimum-idle: 1
+      maximum-pool-size: 10
+      idle-timeout: 300000
+      max-lifetime: 1200000

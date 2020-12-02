@@ -9,15 +9,12 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
-@ToString
 @Getter
 @Setter
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-public class User implements Serializable {
-    private static final long serialVersionUID = 1L;
+public class User {
 
     public static final SQLStore STORE = SQLStoreFactory.build(User.class, true);
 

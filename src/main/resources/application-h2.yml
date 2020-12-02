@@ -1,0 +1,14 @@
+spring:
+  datasource:
+    jpa:
+      show-sql: true
+      database-platform: org.hibernate.dialect.H2Dialect
+      hibernate:
+        ddl-auto: create
+    h2:
+      console:
+        enabled: true
+        path: /h2
+        settings:
+          web-allow-others: true
+          web-admin-password: 123456

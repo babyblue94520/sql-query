@@ -56,11 +56,10 @@ public abstract class SQLInjector {
                     } else {
                         field.set(target, null);
                     }
-                    field.setAccessible(false);
                 }
                 log.info("load {}", xmlPath);
             } else {
-                throw new Error(xmlPath + " is't exist");
+                throw new Error(xmlPath + " isn't exist");
             }
             if (clazz.getSuperclass() != Object.class) {
                 load(target, clazz.getSuperclass());
