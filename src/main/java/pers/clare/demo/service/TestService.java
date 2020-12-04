@@ -19,6 +19,11 @@ public class TestService {
 
     @Autowired
     private TestRepository testRepository;
+    public Test findByName(
+            String name
+    ) {
+        return testRepository.findByName(name);
+    }
 
     public Test insert(
             Test test

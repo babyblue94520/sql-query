@@ -3,11 +3,14 @@ package pers.clare.core.sqlquery;
 
 
 
+import lombok.Getter;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
 
+@Getter
 public class SQLStore<T> {
     Map<Integer, Constructor<T>> constructorMap;
     boolean crud = false;

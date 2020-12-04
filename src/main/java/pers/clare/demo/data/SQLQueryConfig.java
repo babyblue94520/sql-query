@@ -7,11 +7,15 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import pers.clare.core.sqlquery.SQLEntityService;
 import pers.clare.core.sqlquery.SQLQueryService;
+import pers.clare.core.sqlquery.annotation.SQLEntityScan;
 
 import javax.sql.DataSource;
 
 @Profile("mysql")
 @Configuration
+@SQLEntityScan(
+        basePackages = {"pers.clare.demo.data.sql"}
+)
 public class SQLQueryConfig {
     public static final String Prefix = "demo";
     public static final String SQLQueryServiceName = Prefix + "SQLQueryService";

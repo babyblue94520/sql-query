@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 import pers.clare.demo.data.entity.Test;
 import pers.clare.demo.data.entity.User;
+import pers.clare.demo.data.sql.TestEntityRepository;
 import pers.clare.demo.service.TestService;
 
 import java.util.ArrayList;
@@ -22,22 +23,32 @@ public class TestController {
     @Autowired
     private TestService testService;
 
-    @PostMapping("1")
-    public Test add(){
-        return testService.insert(new Test(null, "test" +1));
+    @Autowired(required = false)
+    private TestEntityRepository testEntityRepository;
+
+    @PostMapping("name")
+    public Test findByName(String name) {
+        return testService.findByName(name);
     }
+
+    @PostMapping("1")
+    public Test add() {
+        return testService.insert(new Test(null, "test" + 1));
+    }
+
     @PutMapping("1")
-    public Test modify(Test test){
+    public Test modify(Test test) {
         return testService.update(test);
     }
+
     @DeleteMapping("1")
-    public int remove(Long id){
+    public int remove(Long id) {
         return testService.delete2(id);
     }
 
     @PostMapping("2")
-    public Test add2(){
-        return testService.insert2(new Test(null, "test" +1));
+    public Test add2() {
+        return testService.insert2(new Test(null, "test" + 1));
     }
 
     @GetMapping("1")
@@ -66,7 +77,7 @@ public class TestController {
         }
         long ms = System.currentTimeMillis() - start;
         sp.append("total time:" + ms + '\n');
-        sp.append("average time:" + (total* 1000 / ms) + '\n');
+        sp.append("average time:" + (total * 1000 / ms) + '\n');
         executors.shutdown();
         return sp.toString();
     }
@@ -97,7 +108,7 @@ public class TestController {
         }
         long ms = System.currentTimeMillis() - start;
         sp.append("total time:" + ms + '\n');
-        sp.append("average time:" + (total* 1000 / ms) + '\n');
+        sp.append("average time:" + (total * 1000 / ms) + '\n');
         executors.shutdown();
         return sp.toString();
     }

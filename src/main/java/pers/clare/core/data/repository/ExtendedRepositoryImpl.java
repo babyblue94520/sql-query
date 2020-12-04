@@ -2,6 +2,7 @@ package pers.clare.core.data.repository;
 
 import org.springframework.data.jpa.repository.support.JpaEntityInformation;
 import org.springframework.data.jpa.repository.support.SimpleJpaRepository;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
@@ -12,6 +13,7 @@ import java.util.List;
 /**
  * 將save拆成insert 跟 update
  */
+@Transactional(propagation = Propagation.NEVER)
 public class ExtendedRepositoryImpl<T, ID extends Serializable> extends SimpleJpaRepository<T, ID>
 		implements ExtendedRepository<T, ID> {
 	private final EntityManager entityManager;
