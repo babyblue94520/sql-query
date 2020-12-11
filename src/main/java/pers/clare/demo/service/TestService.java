@@ -7,9 +7,9 @@ import pers.clare.demo.data.SQLQueryConfig;
 import pers.clare.demo.data.entity.Test;
 import pers.clare.demo.data.entity.User;
 import pers.clare.demo.data.repository.TestRepository;
+import pers.clare.demo.data.sql.TestEntityRepository;
 
 import javax.annotation.Resource;
-import javax.validation.constraints.NotNull;
 
 @Service
 public class TestService {
@@ -19,6 +19,10 @@ public class TestService {
 
     @Autowired
     private TestRepository testRepository;
+
+    @Autowired
+    private TestEntityRepository testEntityRepository;
+
     public Test findByName(
             String name
     ) {
@@ -28,27 +32,27 @@ public class TestService {
     public Test insert(
             Test test
     ) {
-        sqlEntityService.insert(test);
-        return sqlEntityService.find(true, test);
+        testEntityRepository.insert(test);
+        return testEntityRepository.find(true, test);
     }
 
     public Test update(
             Test test
     ) {
-        sqlEntityService.update(test);
-        return sqlEntityService.find(true, test);
+        testEntityRepository.update(test);
+        return testEntityRepository.find(true, test);
     }
 
     public int delete(
             Test test
     ) {
-        return sqlEntityService.delete(test);
+        return testEntityRepository.delete(test);
     }
 
     public int delete2(
             Long id
     ) {
-        return sqlEntityService.delete(Test.class, id);
+        return testEntityRepository.delete(id);
     }
 
 

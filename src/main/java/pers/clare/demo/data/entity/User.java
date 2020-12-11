@@ -5,9 +5,6 @@ import pers.clare.core.sqlquery.SQLStore;
 import pers.clare.core.sqlquery.SQLStoreFactory;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import java.io.Serializable;
 
 @Getter
 @Setter
@@ -22,7 +19,6 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "{manage.Account.NotBlank}")
     private String account;
 
     @Transient
@@ -32,7 +28,6 @@ public class User {
 
     private String email;
 
-    @NotNull(message = "{manage.Role.IdNotNull}")
     @Column(name = "role_id")
     private Integer roleId;
 

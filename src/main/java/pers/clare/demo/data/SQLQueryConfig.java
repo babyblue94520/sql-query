@@ -14,7 +14,9 @@ import javax.sql.DataSource;
 @Profile("mysql")
 @Configuration
 @SQLEntityScan(
-        basePackages = {"pers.clare.demo.data.sql"}
+        writeDataSourceRef = DemoDataSourceConfig.DataSourceName
+        , readDataSourceRef = DemoDataSourceConfig.DataSourceName
+        , basePackages = {"pers.clare.demo.data.sql"}
 )
 public class SQLQueryConfig {
     public static final String Prefix = "demo";

@@ -5,7 +5,7 @@ import java.lang.annotation.*;
 /**
  * 載入SQL標籤
  */
-@Target({ElementType.FIELD})
+@Target({ElementType.FIELD, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 public @interface Sql {

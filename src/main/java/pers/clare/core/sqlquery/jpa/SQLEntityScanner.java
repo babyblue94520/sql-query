@@ -17,6 +17,7 @@ import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.core.annotation.AnnotationAttributes;
 import org.springframework.core.env.Environment;
 import org.springframework.util.StringUtils;
 
@@ -34,10 +35,8 @@ public class SQLEntityScanner implements BeanDefinitionRegistryPostProcessor, In
     private ApplicationContext applicationContext;
     private String beanName;
     private String basePackage;
-    private Class<? extends SQLEntityRepositoryFactoryBean> factoryBeanClass;
     private boolean processPropertyPlaceHolders;
-    private Class<? extends Annotation> annotationClass;
-    private Class<?> markerInterface;
+    private AnnotationAttributes annotationAttributes;
 
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
@@ -60,10 +59,8 @@ public class SQLEntityScanner implements BeanDefinitionRegistryPostProcessor, In
         }
 
         ClassPathSQLEntityScanner scanner = new ClassPathSQLEntityScanner(beanDefinitionRegistry);
-        scanner.setAnnotationClass(this.annotationClass);
-        scanner.setMarkerInterface(this.markerInterface);
+        scanner.setAnnotationAttributes(this.annotationAttributes);
         scanner.setResourceLoader(this.applicationContext);
-        scanner.setFactoryBeanClass(this.factoryBeanClass);
         scanner.registerFilters();
         scanner.scan(
                 StringUtils.tokenizeToStringArray(this.basePackage, ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS));

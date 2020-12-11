@@ -7,17 +7,11 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanClassLoaderAware;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
-import org.springframework.data.projection.DefaultMethodInvokingMethodInterceptor;
-import org.springframework.data.projection.ProjectionFactory;
-import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.core.support.*;
-import org.springframework.data.repository.query.QueryLookupStrategy;
-import org.springframework.transaction.interceptor.TransactionalProxy;
 import pers.clare.core.sqlquery.SQLEntityRepositoryImpl;
 
 import javax.sql.DataSource;
-import java.util.Optional;
 
 @Log4j2
 public class SQLEntityRepositoryFactory implements BeanClassLoaderAware, BeanFactoryAware {
@@ -36,24 +30,37 @@ public class SQLEntityRepositoryFactory implements BeanClassLoaderAware, BeanFac
         this.beanFactory = beanFactory;
     }
 
-    public <T> T getRepository(Class<T> repositoryInterface) {
-        SQLEntityRepositoryImpl target ;
+    public void setWriteDataSource(DataSource writeDataSource) {
+        this.writeDataSource = writeDataSource;
+    }
+
+    public void setReadDataSource(DataSource readDataSource) {
+        this.readDataSource = readDataSource;
+    }
+
+    public <T> T getRepository(
+            Class<T> repositoryInterface
+            , DataSource writeDataSource
+            , DataSource readDataSource
+    ) {
+        SQLEntityRepositoryImpl target;
         if (readDataSource != null && readDataSource != writeDataSource) {
             target = new SQLEntityRepositoryImpl(repositoryInterface, writeDataSource, readDataSource);
         } else {
             target = new SQLEntityRepositoryImpl(repositoryInterface, writeDataSource);
         }
+
         ProxyFactory result = new ProxyFactory();
         result.setTarget(target);
         result.setInterfaces(repositoryInterface, SQLEntityRepository.class);
-        if (MethodInvocationValidator.supports(repositoryInterface)) {
-            result.addAdvice(new MethodInvocationValidator());
-        }
+//        if (MethodInvocationValidator.supports(repositoryInterface)) {
+//            result.addAdvice(new MethodInvocationValidator());
+//        }
         result.addAdvisor(ExposeInvocationInterceptor.ADVISOR);
-
-        if (DefaultMethodInvokingMethodInterceptor.hasDefaultMethods(repositoryInterface)) {
-            result.addAdvice(new DefaultMethodInvokingMethodInterceptor());
-        }
+        result.addAdvice(new SQLQueryMethodInterceptor(SQLQueryMethodFactory.create(repositoryInterface)));
+//        if (DefaultMethodInvokingMethodInterceptor.hasDefaultMethods(repositoryInterface)) {
+//            result.addAdvice(new DefaultMethodInvokingMethodInterceptor());
+//        }
 
 
         T repository = (T) result.getProxy(classLoader);

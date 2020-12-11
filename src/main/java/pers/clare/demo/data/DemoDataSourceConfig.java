@@ -75,15 +75,6 @@ public class DemoDataSourceConfig {
                 .build();
     }
 
-
-    @Primary
-    @Bean(name = EntityManagerName)
-    public EntityManager entityManager(
-            @Qualifier(EntityManagerFactoryName) FactoryBean<EntityManagerFactory> entityManagerFactory
-    ) throws Exception {
-        return entityManagerFactory.getObject().createEntityManager();
-    }
-
     @Primary
     @Bean(name = TransactionManagerName)
     @Autowired

@@ -9,12 +9,8 @@ import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import pers.clare.core.sqlquery.*;
 import pers.clare.core.sqlquery.annotation.Sql;
-import pers.clare.demo.data.SQLQueryConfig;
 import pers.clare.demo.data.entity.User;
 
-import javax.annotation.Resource;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 
 
 /**
@@ -76,7 +72,7 @@ public class UserService {
     }
 
     public User insert(
-            @NotNull(message = "{manage.User.NotNull}") User user
+             User user
     ) {
 
         long t = System.currentTimeMillis();
@@ -90,7 +86,7 @@ public class UserService {
     }
 
     public int update(
-            @Valid @NotNull(message = "{manage.User.NotNull}") User user
+            User user
     ) {
         return sqlEntityService.update(user);
     }

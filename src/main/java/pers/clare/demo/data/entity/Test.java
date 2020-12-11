@@ -15,17 +15,12 @@ import javax.persistence.Id;
 @Getter
 @Setter
 @AllArgsConstructor
+@NoArgsConstructor
 @Entity
 public class Test {
-    public static final SQLStore STORE = SQLStoreFactory.build(Test.class, true);
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String name;
-
-    public Test(){
-        this.id = null;
-    }
 }

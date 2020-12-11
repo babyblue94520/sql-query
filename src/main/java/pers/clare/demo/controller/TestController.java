@@ -1,10 +1,13 @@
 package pers.clare.demo.controller;
 
+import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import pers.clare.demo.bo.Test2;
 import pers.clare.demo.data.entity.Test;
 import pers.clare.demo.data.entity.User;
 import pers.clare.demo.data.sql.TestEntityRepository;
@@ -23,17 +26,23 @@ public class TestController {
     @Autowired
     private TestService testService;
 
-    @Autowired(required = false)
+    @Autowired
     private TestEntityRepository testEntityRepository;
 
     @PostMapping("name")
     public Test findByName(String name) {
+        testEntityRepository.aaa();
         return testService.findByName(name);
     }
 
-    @PostMapping("1")
-    public Test add() {
-        return testService.insert(new Test(null, "test" + 1));
+    @PostMapping(value = "aaa",consumes = "application/x-www-form-urlencoded")
+    public Test2 add( Test2 test) {
+        return test;
+    }
+
+    @PostMapping(value = "1")
+    public Test add(Test test) {
+        return testService.insert(test);
     }
 
     @PutMapping("1")
@@ -42,8 +51,8 @@ public class TestController {
     }
 
     @DeleteMapping("1")
-    public int remove(Long id) {
-        return testService.delete2(id);
+    public int remove(Test test) {
+        return testService.delete(test);
     }
 
     @PostMapping("2")
