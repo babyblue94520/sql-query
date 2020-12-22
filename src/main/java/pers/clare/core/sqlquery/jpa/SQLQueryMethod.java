@@ -1,9 +1,8 @@
 package pers.clare.core.sqlquery.jpa;
 
-import lombok.AllArgsConstructor;
-import pers.clare.core.sqlquery.SQLQuery;
+import lombok.NoArgsConstructor;
 
-@AllArgsConstructor
+@NoArgsConstructor
 public class SQLQueryMethod {
-    private final SQLQuery sqlQuery;
+
 }

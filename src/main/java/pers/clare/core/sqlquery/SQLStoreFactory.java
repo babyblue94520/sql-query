@@ -17,12 +17,14 @@ public interface SQLStoreFactory {
     public static final Map<Class, SQLStore> entityMap = new HashMap<>();
 
     public static <T> SQLStore<T> find(Class<T> clazz) {
-        SQLStore entity = entityMap.get(clazz);
-        Asserts.notNull(entity, "%s is't build SQLStore", clazz.getName());
-        return entity;
+        SQLStore store = entityMap.get(clazz);
+        Asserts.notNull(store, "%s isn't build SQLStore", clazz.getName());
+        return store;
     }
 
     public static <T> SQLStore<T> build(Class<T> clazz, boolean crud) {
+        SQLStore store = entityMap.get(clazz);
+        if (store != null) return store;
         Map<Integer, Constructor<T>> constructorMap = new HashMap<>();
         Constructor<T>[] constructors = (Constructor<T>[]) clazz.getConstructors();
         for (Constructor<T> constructor : constructors) {
@@ -30,7 +32,6 @@ public interface SQLStoreFactory {
                 constructorMap.put(constructor.getParameterCount(), constructor);
             }
         }
-        SQLStore entity;
         if (crud) {
             String tableName = SQLUtil.convert(clazz.getSimpleName());
             StringBuilder selectColumns = new StringBuilder();
@@ -178,7 +179,7 @@ public interface SQLStoreFactory {
             String update = new String(chars);
 
             // delete
-            chars = new char[12 + tl  + wl];
+            chars = new char[12 + tl + wl];
             index = 0;
             "delete from ".getChars(0, 12, chars, index);
             index += 12;
@@ -190,11 +191,11 @@ public interface SQLStoreFactory {
 //            System.out.println(insert);
 //            System.out.println(update);
 //            System.out.println(delete);
-            entity = new SQLStore(constructorMap, crud, autoKey, keyMethods, insertMethods, updateMethods, count, select, insert, update, delete);
+            store = new SQLStore(constructorMap, crud, autoKey, keyMethods, insertMethods, updateMethods, count, select, insert, update, delete);
         } else {
-            entity = new SQLStore(constructorMap);
+            store = new SQLStore(constructorMap);
         }
-        entityMap.put(clazz, entity);
-        return entity;
+        entityMap.put(clazz, store);
+        return store;
     }
 }

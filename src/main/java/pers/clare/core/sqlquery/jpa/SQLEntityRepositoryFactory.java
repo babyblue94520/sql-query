@@ -10,6 +10,9 @@ import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.core.support.*;
 import pers.clare.core.sqlquery.SQLEntityRepositoryImpl;
+import pers.clare.core.sqlquery.SQLQuery;
+import pers.clare.core.sqlquery.SQLQueryService;
+import pers.clare.core.sqlquery.SQLService;
 
 import javax.sql.DataSource;
 
@@ -44,10 +47,16 @@ public class SQLEntityRepositoryFactory implements BeanClassLoaderAware, BeanFac
             , DataSource readDataSource
     ) {
         SQLEntityRepositoryImpl target;
+        SQLQueryService sqlQueryService;
+        SQLService sqlService;
         if (readDataSource != null && readDataSource != writeDataSource) {
             target = new SQLEntityRepositoryImpl(repositoryInterface, writeDataSource, readDataSource);
+            sqlQueryService = new SQLQueryService(writeDataSource, readDataSource);
+            sqlService = new SQLService(writeDataSource, readDataSource);
         } else {
             target = new SQLEntityRepositoryImpl(repositoryInterface, writeDataSource);
+            sqlQueryService = new SQLQueryService(writeDataSource);
+            sqlService = new SQLService(writeDataSource);
         }
 
         ProxyFactory result = new ProxyFactory();
@@ -57,7 +66,7 @@ public class SQLEntityRepositoryFactory implements BeanClassLoaderAware, BeanFac
 //            result.addAdvice(new MethodInvocationValidator());
 //        }
         result.addAdvisor(ExposeInvocationInterceptor.ADVISOR);
-        result.addAdvice(new SQLQueryMethodInterceptor(SQLQueryMethodFactory.create(repositoryInterface)));
+        result.addAdvice(new SQLQueryMethodInterceptor(SQLQueryMethodFactory.create(sqlQueryService, sqlService, repositoryInterface)));
 //        if (DefaultMethodInvokingMethodInterceptor.hasDefaultMethods(repositoryInterface)) {
 //            result.addAdvice(new DefaultMethodInvokingMethodInterceptor());
 //        }

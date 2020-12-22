@@ -87,7 +87,7 @@ public class SQLQueryBuilder {
         return new SQLQuery(sqlParts, keys, inIndex);
     }
 
-    private int findKeyCount(char[] sqlChars) {
+    public static int findKeyCount(char[] sqlChars) {
         int count = 0;
         for (int i = 0, l = sqlChars.length; i < l; i++) {
             if (sqlChars[i] == ':' && sqlChars[i + 1] != '=') {

@@ -17,7 +17,10 @@ public class SQLQueryReplaceBuilder {
     private final Integer[] keyIndex;
 
     public SQLQueryReplaceBuilder(String sql) {
-        char[] sqlChars = sql.toCharArray();
+        this(sql.toCharArray());
+    }
+
+    public SQLQueryReplaceBuilder(char[] sqlChars ) {
         int count = findKeyCount(sqlChars);
         keys = new String[count];
         keyIndex = new Integer[count + count + 1];
@@ -65,7 +68,7 @@ public class SQLQueryReplaceBuilder {
         return new SQLQueryReplace(sqlParts, keys, keyIndex);
     }
 
-    private int findKeyCount(char[] sqlChars) {
+    public static int findKeyCount(char[] sqlChars) {
         int count = 0;
         for (int i = 0, l = sqlChars.length; i < l; i++) {
             if (sqlChars[i] == '{') {

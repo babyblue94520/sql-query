@@ -18,7 +18,7 @@ import pers.clare.demo.data.entity.User;
 @Slf4j
 @Validated
 @Service
-public class UserService {
+public class UserService2 {
     /**
      * 密碼最小長度.
      */
@@ -26,12 +26,6 @@ public class UserService {
 
     @Sql
     private SQLQueryReplaceBuilder findAll;
-    @Sql
-    private SQLQueryReplaceBuilder findAll1;
-    @Sql
-    private SQLQueryReplaceBuilder findAll2;
-    @Sql
-    private SQLQueryReplaceBuilder findAll3;
     @Sql
     private SQLQueryReplaceBuilder findAll4;
     @Sql

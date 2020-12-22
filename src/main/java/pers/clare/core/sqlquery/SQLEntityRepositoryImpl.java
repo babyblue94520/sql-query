@@ -31,12 +31,12 @@ public class SQLEntityRepositoryImpl<T, ID> extends SQLService implements SQLEnt
         sqlStore = SQLStoreFactory.build((Class<T>) types[0], true);
     }
 
-    public <T> long count() {
+    public long count() {
         return count(false);
     }
 
-    public <T> long count(
-            boolean readonly
+    public long count(
+            Boolean readonly
     ) {
         try (
                 Connection conn = getDataSource(readonly).getConnection();
@@ -59,7 +59,7 @@ public class SQLEntityRepositoryImpl<T, ID> extends SQLService implements SQLEnt
     }
 
     public <T> T find(
-            boolean readonly
+            Boolean readonly
             , T entity
     ) {
         try (

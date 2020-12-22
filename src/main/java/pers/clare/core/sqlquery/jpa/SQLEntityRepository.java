@@ -11,14 +11,14 @@ import java.sql.*;
 @NoRepositoryBean
 public interface SQLEntityRepository<T, ID> extends Repository<T, ID> {
 
-    public <T> long count();
+    public long count();
 
-    public <T> long count(boolean readonly);
+    public long count(Boolean readonly);
 
     public <T> T find(T entity);
 
     public <T> T find(
-            boolean readonly
+            Boolean readonly
             , T entity
     );
 
@@ -32,9 +32,5 @@ public interface SQLEntityRepository<T, ID> extends Repository<T, ID> {
 
     public <T> int delete(
             T entity
-    );
-
-    public <T> int delete(
-            Object... args
     );
 }
