@@ -69,6 +69,33 @@ public class SQLService {
         }
     }
 
+    public <T> Map<String, T> find(
+            Class<T> valueClass
+            , String sql
+            , Object... parameters
+    ) {
+        return find(false, valueClass, sql, parameters);
+    }
+
+    public <T> Map<String, T> find(
+            boolean readonly
+            , Class<T> valueClass
+            , String sql
+            , Object... parameters
+    ) {
+        try (
+                Connection conn = getDataSource(readonly).getConnection();
+        ) {
+            Map<String, T> result = ResultSetUtil.toMap(valueClass, PreparedStatementUtil.create(conn, sql, parameters).executeQuery());
+            if (retry(result, readonly)) {
+                return find(false, valueClass, sql, parameters);
+            }
+            return result;
+        } catch (Exception e) {
+            throw new SQLQueryException(e.getMessage(), e);
+        }
+    }
+
     public <T> T findFirst(
             Class<T> clazz
             , String sql

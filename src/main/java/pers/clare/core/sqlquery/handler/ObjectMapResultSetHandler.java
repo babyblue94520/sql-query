@@ -6,10 +6,9 @@ import org.aopalliance.intercept.MethodInvocation;
 import pers.clare.core.sqlquery.SQLService;
 
 @AllArgsConstructor
-public class MapResultSetHandler implements MethodInterceptor {
+public class ObjectMapResultSetHandler implements MethodInterceptor {
     private String sql;
     private SQLService sqlService;
-    private Class<?> valueClass;
 
     @Override
     public Object invoke(MethodInvocation methodInvocation) {

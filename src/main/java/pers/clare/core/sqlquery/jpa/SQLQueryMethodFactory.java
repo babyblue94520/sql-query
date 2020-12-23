@@ -10,6 +10,7 @@ import pers.clare.core.sqlquery.exception.SQLQueryException;
 import pers.clare.core.sqlquery.handler.*;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.HashMap;
@@ -35,6 +36,7 @@ public class SQLQueryMethodFactory {
         Sql sql;
         boolean page;
         Class<?> returnType;
+        Class<?> valueClass;
         for (Method method : methods) {
             command = contents.get(method.getName());
             if (command == null) {
@@ -55,8 +57,9 @@ public class SQLQueryMethodFactory {
                     }
                 }
                 returnType = method.getReturnType();
+                SQLEntity sqlEntity = returnType.getAnnotation(SQLEntity.class);
                 if (Collection.class.isAssignableFrom(returnType)) {
-
+                    valueClass = getReturnActualType(method,0);
                     if (returnType == Set.class) {
 
                     } else {
@@ -64,9 +67,13 @@ public class SQLQueryMethodFactory {
                     }
                     queryMethods.put(method, new OneListResultSetHandler(command, sqlService, returnType));
                 } else if (returnType == Map.class) {
-                    queryMethods.put(method, new MapResultSetHandler(command, sqlService));
+                    valueClass = getReturnActualType(method,1);
+                    if(valueClass==Object.class){
+                        queryMethods.put(method, new ObjectMapResultSetHandler(command, sqlService));
+                    }else{
+                        queryMethods.put(method, new MapResultSetHandler(command, sqlService,valueClass));
+                    }
                 } else {
-                    SQLEntity sqlEntity = returnType.getAnnotation(SQLEntity.class);
                     if (sqlEntity == null) {
                         queryMethods.put(method, new OneResultSetHandler(command, sqlService, returnType));
                     } else {
@@ -87,11 +94,7 @@ public class SQLQueryMethodFactory {
         return queryMethods;
     }
 
-    private Class<?> getFirstActualType(Class<?> clazz){
-        Type[] interfaces = clazz.getGenericInterfaces();
-        if (interfaces == null || interfaces.length == 0) {
-            throw new IllegalArgumentException("Repository interface must not be null!");
-        }
-        return null;
+    private static Class<?> getReturnActualType(Method method,int index){
+       return (Class<?>) ((ParameterizedType)method.getGenericReturnType()).getActualTypeArguments()[index];
     }
 }
