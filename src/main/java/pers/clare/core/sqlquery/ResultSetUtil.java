@@ -32,6 +32,17 @@ public class ResultSetUtil {
     }
 
 
+    public static <T> Map<String, T> toMap(Class<T> valueClass, ResultSet rs) throws SQLException {
+        if (rs.next()) {
+            if (valueClass == Object.class) {
+                return (Map<String, T>) toMap(rs, getNames(rs));
+            } else {
+                return toMap(valueClass, rs, getNames(rs));
+            }
+        }
+        return null;
+    }
+
     private static Map<String, Object> toMap(ResultSet rs, String[] names) throws SQLException {
         Map<String, Object> map = new HashMap<>();
         int i = 1;
@@ -39,11 +50,6 @@ public class ResultSetUtil {
             map.put(name, rs.getObject(i++));
         }
         return map;
-    }
-
-    public static <T> Map<String, T> toMap(Class<T> valueClass, ResultSet rs) throws SQLException {
-        if (rs.next()) return toMap(valueClass, rs, getNames(rs));
-        return null;
     }
 
     private static <T> Map<String, T> toMap(Class<T> valueClass, ResultSet rs, String[] names) throws SQLException {
@@ -63,11 +69,17 @@ public class ResultSetUtil {
         return result;
     }
 
-    public static List<Map<String, Object>> toList(ResultSet rs) throws SQLException {
+    public static <T> List<Map<String, T>> toMapList(Class<T> valueClass, ResultSet rs) throws SQLException {
         String[] names = getNames(rs);
-        List<Map<String, Object>> list = new ArrayList<>();
-        while (rs.next()) {
-            list.add(toMap(rs, names));
+        List<Map<String, T>> list = new ArrayList<>();
+        if (valueClass == Object.class) {
+            while (rs.next()) {
+                list.add((Map<String, T>) toMap(rs, names));
+            }
+        } else {
+            while (rs.next()) {
+                list.add(toMap(valueClass, rs, names));
+            }
         }
         return list;
     }

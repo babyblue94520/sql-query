@@ -1,6 +1,7 @@
 package pers.clare.core.sqlquery;
 
 import pers.clare.core.util.Asserts;
+import pers.clare.demo.data.entity.User;
 
 import javax.persistence.Column;
 import javax.persistence.GeneratedValue;
@@ -9,22 +10,38 @@ import javax.persistence.Transient;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 public interface SQLStoreFactory {
 
-    public static final Map<Class, SQLStore> entityMap = new HashMap<>();
+    Map<Class, SQLStore> entityMap = new HashMap<>();
 
-    public static <T> SQLStore<T> find(Class<T> clazz) {
+    static <T> SQLStore<T> find(Class<T> clazz) {
         SQLStore store = entityMap.get(clazz);
-        Asserts.notNull(store, "%s isn't build SQLStore", clazz.getName());
+        Asserts.notNull(store, "%s have not build SQLStore", clazz.getName());
         return store;
     }
 
-    public static <T> SQLStore<T> build(Class<T> clazz, boolean crud) {
+    static boolean isIgnore(Class<?> clazz) {
+        return clazz == null
+                || clazz.isPrimitive()
+                || clazz.getName().startsWith("java.lang")
+                || clazz.isArray()
+                || Collection.class.isAssignableFrom(clazz)
+                || clazz.isEnum()
+                || clazz.isInterface()
+        ;
+    }
+
+    static <T> SQLStore<T> build(Class<T> clazz, boolean crud) {
+        if (isIgnore(clazz)) throw new Error(String.format("%s can not build SQLStore", clazz));
         SQLStore store = entityMap.get(clazz);
-        if (store != null) return store;
+        if (store != null
+                && ((crud && store.crud) || !crud)) return store;
+
         Map<Integer, Constructor<T>> constructorMap = new HashMap<>();
         Constructor<T>[] constructors = (Constructor<T>[]) clazz.getConstructors();
         for (Constructor<T> constructor : constructors) {
@@ -197,5 +214,10 @@ public interface SQLStoreFactory {
         }
         entityMap.put(clazz, store);
         return store;
+    }
+
+    public static void main(String[] args) {
+        System.out.println(User.class.getName());
+
     }
 }

@@ -12,12 +12,11 @@ import java.lang.annotation.*;
 @Documented
 @Inherited
 @Import({SQLEntityScanRegistrar.class})
-public @interface SQLEntityScan {
+public @interface SQLStoreScan {
     String[] value() default {};
     String[] basePackages() default {};
     Class<?>[] basePackageClasses() default {};
-    String writeDataSourceRef() default "dataSource";
-    String readDataSourceRef() default "dataSource";
+    String sqlStoreServiceRef() default "sqlStoreService";
     Class<? extends SQLEntityRepositoryFactoryBean> factoryBean() default SQLEntityRepositoryFactoryBean.class;
     Class<? extends Annotation> annotationClass() default Annotation.class;
     Class<?> markerInterface() default Class.class;

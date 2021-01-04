@@ -1,18 +1,17 @@
 package pers.clare.core.sqlquery.handler;
 
-import lombok.AllArgsConstructor;
-import org.aopalliance.intercept.MethodInterceptor;
-import org.aopalliance.intercept.MethodInvocation;
-import pers.clare.core.sqlquery.SQLService;
+import pers.clare.core.sqlquery.SQLStoreService;
 
-@AllArgsConstructor
-public class MapResultSetHandler implements MethodInterceptor {
-    private String sql;
-    private SQLService sqlService;
-    private Class<?> valueClass;
+import java.lang.reflect.Method;
+
+public class MapResultSetHandler extends SQLSelectHandler {
+
+    public MapResultSetHandler(Method method, String sql, SQLStoreService sqlStoreService, Class<?> valueType) {
+        super(method, sql, sqlStoreService, valueType);
+    }
 
     @Override
-    public Object invoke(MethodInvocation methodInvocation) {
-        return sqlService.find(sql, methodInvocation.getArguments());
+    protected Object doInvoke(String sql, Object[] arguments) {
+        return sqlStoreService.find(sql, arguments);
     }
 }

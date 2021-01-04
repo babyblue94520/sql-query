@@ -12,13 +12,8 @@ import org.springframework.beans.factory.support.GenericBeanDefinition;
 import org.springframework.context.annotation.AnnotationConfigUtils;
 import org.springframework.context.annotation.ClassPathBeanDefinitionScanner;
 import org.springframework.core.annotation.AnnotationAttributes;
-import org.springframework.core.env.Environment;
-import org.springframework.core.io.ResourceLoader;
-import org.springframework.core.type.filter.AnnotationTypeFilter;
-import org.springframework.core.type.filter.AssignableTypeFilter;
 import org.springframework.data.repository.util.ClassUtils;
 
-import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.Set;
 
@@ -47,14 +42,14 @@ public class ClassPathSQLEntityScanner extends ClassPathBeanDefinitionScanner {
         Set<BeanDefinitionHolder> beanDefinitions = super.doScan(basePackages);
 
         if (beanDefinitions.isEmpty()) {
-            log.warn(() -> "No MyBatis mapper was found in '" + Arrays.toString(basePackages)
-                    + "' package. Please check your configuration.");
+            log.warn("No SQLStore was found in '{}' package. Please check your configuration.", Arrays.toString(basePackages));
         } else {
             processBeanDefinitions(beanDefinitions);
         }
 
         return beanDefinitions;
     }
+
     @Override
     protected boolean isCandidateComponent(AnnotatedBeanDefinition beanDefinition) {
         boolean isNonRepositoryInterface = !ClassUtils.isGenericRepositoryInterface(beanDefinition.getBeanClassName());
@@ -63,23 +58,16 @@ public class ClassPathSQLEntityScanner extends ClassPathBeanDefinitionScanner {
         return isNonRepositoryInterface && isTopLevelType;
     }
 
-    /**
-     * Customizes the repository interface detection and triggers annotation detection on them.
-     */
     @Override
     public Set<BeanDefinition> findCandidateComponents(String basePackage) {
-
         Set<BeanDefinition> candidates = super.findCandidateComponents(basePackage);
-
         for (BeanDefinition candidate : candidates) {
             if (candidate instanceof AnnotatedBeanDefinition) {
                 AnnotationConfigUtils.processCommonDefinitionAnnotations((AnnotatedBeanDefinition) candidate);
             }
         }
-
         return candidates;
     }
-
 
 
     private void processBeanDefinitions(Set<BeanDefinitionHolder> beanDefinitions) {
@@ -88,15 +76,10 @@ public class ClassPathSQLEntityScanner extends ClassPathBeanDefinitionScanner {
         for (BeanDefinitionHolder holder : beanDefinitions) {
             definition = (GenericBeanDefinition) holder.getBeanDefinition();
             String beanClassName = definition.getBeanClassName();
-            log.debug(() -> "Creating MapperFactoryBean with name '" + holder.getBeanName() + "' and '" + beanClassName
-                    + "' mapperInterface");
+            log.debug("Creating SQLEntityRepositoryFactoryBean with name '{}' and '{}' interface", holder.getBeanName(), beanClassName);
 
-            // the mapper interface is the original class of the bean
-            // but, the actual class of the bean is MapperFactoryBean
-            definition.getConstructorArgumentValues()
-                    .addGenericArgumentValue(beanClassName); // issue #59
-            definition.getConstructorArgumentValues()
-                    .addGenericArgumentValue(annotationAttributes);
+            definition.getConstructorArgumentValues().addGenericArgumentValue(beanClassName);
+            definition.getConstructorArgumentValues().addGenericArgumentValue(annotationAttributes);
             definition.setBeanClass(factoryBeanClass);
             definition.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
         }

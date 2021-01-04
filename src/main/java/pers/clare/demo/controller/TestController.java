@@ -29,10 +29,9 @@ public class TestController {
     @Autowired
     private TestEntityRepository testEntityRepository;
 
-    @PostMapping("name")
-    public Test findByName(String name) {
-        testEntityRepository.aaa();
-        return testService.findByName(name);
+    @PostMapping("id")
+    public Object find(Long id) {
+        return testEntityRepository.bbb(id);
     }
 
     @PostMapping(value = "aaa",consumes = "application/x-www-form-urlencoded")
@@ -41,7 +40,7 @@ public class TestController {
     }
 
     @PostMapping(value = "1")
-    public Test add(Test test) {
+    public Test add(@RequestBody Test test) {
         return testService.insert(test);
     }
 

@@ -7,10 +7,7 @@ import org.springframework.data.domain.Pageable;
 import pers.clare.core.sqlquery.exception.SQLQueryException;
 
 import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -59,7 +56,7 @@ public class SQLService {
         try (
                 Connection conn = getDataSource(readonly).getConnection();
         ) {
-            Map<String, Object> result = ResultSetUtil.toMap(PreparedStatementUtil.create(conn, sql, parameters).executeQuery());
+            Map<String, Object> result = ResultSetUtil.toMap(PreparedStatementUtil.query(conn, sql, parameters));
             if (retry(result, readonly)) {
                 return find(false, sql, parameters);
             }
@@ -70,27 +67,50 @@ public class SQLService {
     }
 
     public <T> Map<String, T> find(
-            Class<T> valueClass
-            , String sql
+            String sql
+            , Class<T> valueClass
             , Object... parameters
     ) {
-        return find(false, valueClass, sql, parameters);
+        return find(false, sql, valueClass, parameters);
     }
 
     public <T> Map<String, T> find(
             boolean readonly
-            , Class<T> valueClass
             , String sql
+            , Class<T> valueClass
             , Object... parameters
     ) {
         try (
                 Connection conn = getDataSource(readonly).getConnection();
         ) {
-            Map<String, T> result = ResultSetUtil.toMap(valueClass, PreparedStatementUtil.create(conn, sql, parameters).executeQuery());
+            Map<String, T> result = ResultSetUtil.toMap(valueClass, PreparedStatementUtil.query(conn, sql, parameters));
             if (retry(result, readonly)) {
-                return find(false, valueClass, sql, parameters);
+                return find(false, sql, valueClass, parameters);
             }
             return result;
+        } catch (Exception e) {
+            throw new SQLQueryException(e.getMessage(), e);
+        }
+    }
+
+    public <T> Set<T> findSet(
+            String sql
+            , Class<T> valueClass
+            , Object... parameters
+    ) {
+        return findSet(false, sql, valueClass, parameters);
+    }
+
+    public <T> Set<T> findSet(
+            boolean readonly
+            , String sql
+            , Class<T> valueClass
+            , Object... parameters
+    ) {
+        try (
+                Connection conn = getDataSource(readonly).getConnection();
+        ) {
+            return ResultSetUtil.toSet(valueClass, PreparedStatementUtil.query(conn, sql, parameters));
         } catch (Exception e) {
             throw new SQLQueryException(e.getMessage(), e);
         }
@@ -113,7 +133,7 @@ public class SQLService {
         try (
                 Connection conn = getDataSource(readonly).getConnection();
         ) {
-            T result = ResultSetUtil.to(clazz, PreparedStatementUtil.create(conn, sql, parameters).executeQuery());
+            T result = ResultSetUtil.to(clazz, PreparedStatementUtil.query(conn, sql, parameters));
             if (retry(result, readonly)) {
                 return findFirst(false, clazz, sql, parameters);
             }
@@ -123,37 +143,41 @@ public class SQLService {
         }
     }
 
-    public List<Map<String, Object>> findAll(
-            String sql
+    public <T> List<Map<String, T>> findAllMap(
+            Class<T> clazz
+            , String sql
             , Object... parameters
     ) {
-        return findAll(false, sql, parameters);
+        return findAllMap(false, clazz, sql, parameters);
     }
 
-    public List<Map<String, Object>> findAll(
+    public <T> List<Map<String, T>> findAllMap(
             boolean readonly
+            , Class<T> clazz
             , String sql
             , Object... parameters
     ) {
         try (
                 Connection conn = getDataSource(readonly).getConnection();
         ) {
-            return ResultSetUtil.toList(PreparedStatementUtil.create(conn, sql, parameters).executeQuery());
+            return ResultSetUtil.toMapList(clazz, PreparedStatementUtil.query(conn, sql, parameters));
         } catch (Exception e) {
             throw new SQLQueryException(e.getMessage(), e);
         }
     }
 
-    public Page<Map<String, Object>> findAll(
-            String sql
+    public <T> Page<Map<String, T>> findAllMap(
+            Class<T> clazz
+            , String sql
             , Pageable pageable
             , Object... parameters
     ) {
-        return findAll(false, sql, pageable, parameters);
+        return findAllMap(false, clazz, sql, pageable, parameters);
     }
 
-    public Page<Map<String, Object>> findAll(
+    public <T> Page<Map<String, T>> findAllMap(
             boolean readonly
+            , Class<T> clazz
             , String sql
             , Pageable pageable
             , Object... parameters
@@ -161,11 +185,11 @@ public class SQLService {
         try (
                 Connection conn = getDataSource(readonly).getConnection()
         ) {
-            List<Map<String, Object>> list = ResultSetUtil.toList(PreparedStatementUtil.create(conn, sql, pageable, parameters).executeQuery());
+            List<Map<String, T>> list = ResultSetUtil.toMapList(clazz, PreparedStatementUtil.query(conn, sql, pageable, parameters));
             if (list.size() <= pageable.getPageSize()) {
                 return new PageImpl<>(list, pageable, list.size());
             }
-            ResultSet rs = PreparedStatementUtil.create(conn, SQLUtil.buildTotalSQL(sql), parameters).executeQuery();
+            ResultSet rs = PreparedStatementUtil.query(conn, SQLUtil.buildTotalSQL(sql), parameters);
             if (rs.next()) {
                 return new PageImpl<>(list, pageable, rs.getLong(1));
             }
@@ -192,24 +216,7 @@ public class SQLService {
         try (
                 Connection conn = getDataSource(readonly).getConnection()
         ) {
-            return ResultSetUtil.toList(clazz, PreparedStatementUtil.create(conn, sql, parameters)
-                    .executeQuery());
-        } catch (Exception e) {
-            throw new SQLQueryException(e.getMessage(), e);
-        }
-    }
-
-    public <T> Set<T> findSet(
-            boolean readonly
-            , Class<T> clazz
-            , String sql
-            , Object... parameters
-    ) {
-        try (
-                Connection conn = getDataSource(readonly).getConnection()
-        ) {
-            return ResultSetUtil.toSet(clazz, PreparedStatementUtil.create(conn, sql, parameters)
-                    .executeQuery());
+            return ResultSetUtil.toList(clazz, PreparedStatementUtil.query(conn, sql, parameters));
         } catch (Exception e) {
             throw new SQLQueryException(e.getMessage(), e);
         }
@@ -223,9 +230,9 @@ public class SQLService {
         try (
                 Connection conn = write.getConnection();
         ) {
-            PreparedStatement ps = PreparedStatementUtil.createInsert(conn, sql, parameters);
-            ps.executeUpdate();
-            ResultSet rs = ps.getGeneratedKeys();
+            Statement s = PreparedStatementUtil.executeInsert(conn, sql, parameters);
+            if (s.getUpdateCount() == 0) return null;
+            ResultSet rs = s.getGeneratedKeys();
             return rs.next() ? rs.getObject(1, keyType) : null;
         } catch (SQLException e) {
             throw new SQLQueryException(e.getMessage(), e);
@@ -239,7 +246,7 @@ public class SQLService {
         try (
                 Connection conn = write.getConnection();
         ) {
-            return PreparedStatementUtil.create(conn, sql, parameters).executeUpdate();
+            return PreparedStatementUtil.execute(conn, sql, parameters);
         } catch (SQLException e) {
             throw new SQLQueryException(e.getMessage(), e);
         }

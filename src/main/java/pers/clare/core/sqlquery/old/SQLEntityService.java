@@ -1,6 +1,7 @@
-package pers.clare.core.sqlquery;
+package pers.clare.core.sqlquery.old;
 
 import lombok.extern.log4j.Log4j2;
+import pers.clare.core.sqlquery.*;
 import pers.clare.core.sqlquery.exception.SQLQueryException;
 
 import javax.sql.DataSource;

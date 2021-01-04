@@ -3,17 +3,14 @@ package pers.clare.core.sqlquery.jpa;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.context.ResourceLoaderAware;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.core.annotation.AnnotationAttributes;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
-import pers.clare.core.sqlquery.annotation.SQLEntityScan;
+import pers.clare.core.sqlquery.annotation.SQLStoreScan;
 
-import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -38,7 +35,7 @@ public class SQLEntityScanRegistrar implements ImportBeanDefinitionRegistrar, Re
     @Override
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
         AnnotationAttributes SQLEntityScanAttrs = AnnotationAttributes
-                .fromMap(importingClassMetadata.getAnnotationAttributes(SQLEntityScan.class.getName()));
+                .fromMap(importingClassMetadata.getAnnotationAttributes(SQLStoreScan.class.getName()));
         if (SQLEntityScanAttrs != null) {
             registerBeanDefinitions(importingClassMetadata, SQLEntityScanAttrs, registry,
                     generateBaseBeanName(importingClassMetadata, 0));

@@ -1,13 +1,11 @@
 package pers.clare.core.sqlquery;
 
 import lombok.extern.log4j.Log4j2;
-import org.apache.logging.log4j.Logger;
 import org.springframework.util.StringUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import pers.clare.core.sqlquery.annotation.Sql;
-import pers.clare.demo.service.UserService;
 
 import javax.xml.parsers.*;
 import java.io.InputStream;
@@ -82,6 +80,7 @@ public class SQLInjector {
         String xmlPath = toPath(clazz);
         Map<String, String> map = new HashMap<>();
         try (InputStream is = clazz.getClassLoader().getResourceAsStream(xmlPath)) {
+            if (is == null) return map;
             log.info("load {}", xmlPath);
             Document doc = documentBuilder.parse(is);
             NodeList nodeList = doc.getDocumentElement().getChildNodes();

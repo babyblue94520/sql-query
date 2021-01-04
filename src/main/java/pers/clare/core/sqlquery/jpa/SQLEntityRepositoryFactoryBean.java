@@ -15,6 +15,7 @@ import org.springframework.data.repository.core.support.RepositoryFactorySupport
 import org.springframework.data.repository.query.QueryMethod;
 import org.springframework.data.util.Lazy;
 import org.springframework.util.Assert;
+import pers.clare.core.sqlquery.SQLStoreService;
 
 import javax.sql.DataSource;
 import java.util.List;
@@ -91,14 +92,12 @@ public class SQLEntityRepositoryFactoryBean<T extends Repository<S, ID>, S, ID> 
 
     @Override
     public void afterPropertiesSet() throws Exception {
-
-        DataSource writeDataSource = (DataSource) beanFactory.getBean(this.annotationAttributes.getString("writeDataSourceRef"));
-        DataSource readDataSource = (DataSource) beanFactory.getBean(this.annotationAttributes.getString("readDataSourceRef"));
+        SQLStoreService sqlStoreService = (SQLStoreService) beanFactory.getBean(this.annotationAttributes.getString("sqlStoreServiceRef"));
         this.factory = new SQLEntityRepositoryFactory();
         this.factory.setBeanClassLoader(classLoader);
         this.factory.setBeanFactory(beanFactory);
         this.repositoryMetadata = this.factory.getRepositoryMetadata(repositoryInterface);
-        this.repository = this.factory.getRepository(repositoryInterface, writeDataSource, readDataSource);
+        this.repository = this.factory.getRepository(repositoryInterface, sqlStoreService);
     }
 
 }

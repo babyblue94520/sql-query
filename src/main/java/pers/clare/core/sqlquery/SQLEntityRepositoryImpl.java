@@ -8,17 +8,14 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.sql.*;
+import java.util.List;
 
-public class SQLEntityRepositoryImpl<T, ID> extends SQLService implements SQLEntityRepository<T, ID> {
+public class SQLEntityRepositoryImpl<T, ID> implements SQLEntityRepository<T, ID> {
     private final SQLStore<T> sqlStore;
+    private SQLStoreService sqlStoreService;
 
-    public SQLEntityRepositoryImpl(Class<T> repositoryClass, DataSource write) {
-        this(repositoryClass, write, write);
-    }
-
-    public SQLEntityRepositoryImpl(Class<T> repositoryClass, DataSource write, DataSource read) {
-        super(write, read);
-
+    public SQLEntityRepositoryImpl(Class<T> repositoryClass, SQLStoreService sqlStoreService) {
+        this.sqlStoreService = sqlStoreService;
         Type[] interfaces = repositoryClass.getGenericInterfaces();
         if (interfaces == null || interfaces.length == 0) {
             throw new IllegalArgumentException("Repository interface must not be null!");
@@ -38,15 +35,25 @@ public class SQLEntityRepositoryImpl<T, ID> extends SQLService implements SQLEnt
     public long count(
             Boolean readonly
     ) {
+        return sqlStoreService.findFirst(readonly, Long.class, sqlStore.count);
+    }
+
+    public <T> List<T> findAll(
+    ) {
+        return findAll(false);
+    }
+    public <T> List<T> findAll(
+            Boolean readonly
+    ) {
         try (
-                Connection conn = getDataSource(readonly).getConnection();
+                Connection conn = sqlStoreService.getDataSource(readonly).getConnection();
         ) {
-            PreparedStatement ps = conn.prepareStatement(sqlStore.count);
-            Long count = ResultSetUtil.to(Long.class, ps.executeQuery());
-            if (retry(count, readonly)) {
-                return count(false);
+            PreparedStatement ps = conn.prepareStatement(sqlStore.all);
+            List<T> result = (List<T>) SQLEntityUtil.toInstances(sqlStore.constructorMap, ps.executeQuery());
+            if (sqlStoreService.retry(result, readonly)) {
+                return findAll(false);
             }
-            return count == null ? 0L : count;
+            return result;
         } catch (Exception e) {
             throw new SQLQueryException(e.getMessage(), e);
         }
@@ -63,12 +70,12 @@ public class SQLEntityRepositoryImpl<T, ID> extends SQLService implements SQLEnt
             , T entity
     ) {
         try (
-                Connection conn = getDataSource(readonly).getConnection();
+                Connection conn = sqlStoreService.getDataSource(readonly).getConnection();
         ) {
             PreparedStatement ps = conn.prepareStatement(sqlStore.select);
             SQLEntityUtil.setValue(ps, entity, sqlStore.keyMethods);
             T result = (T) SQLEntityUtil.toInstance(sqlStore.constructorMap, ps.executeQuery());
-            if (retry(result, readonly)) {
+            if (sqlStoreService.retry(result, readonly)) {
                 return find(false, entity);
             }
             return result;
@@ -81,7 +88,7 @@ public class SQLEntityRepositoryImpl<T, ID> extends SQLService implements SQLEnt
             T entity
     ) {
         try (
-                Connection conn = write.getConnection();
+                Connection conn = sqlStoreService.getDataSource(false).getConnection();
         ) {
 
             PreparedStatement ps = conn.prepareStatement(sqlStore.insert, Statement.RETURN_GENERATED_KEYS);
@@ -103,7 +110,7 @@ public class SQLEntityRepositoryImpl<T, ID> extends SQLService implements SQLEnt
             T entity
     ) {
         try (
-                Connection conn = write.getConnection();
+                Connection conn = sqlStoreService.getDataSource(false).getConnection();
         ) {
 
             PreparedStatement ps = conn.prepareStatement(sqlStore.update);
@@ -119,7 +126,7 @@ public class SQLEntityRepositoryImpl<T, ID> extends SQLService implements SQLEnt
             T entity
     ) {
         try (
-                Connection conn = write.getConnection();
+                Connection conn = sqlStoreService.getDataSource(false).getConnection();
         ) {
 
             PreparedStatement ps = conn.prepareStatement(sqlStore.delete);
@@ -134,7 +141,7 @@ public class SQLEntityRepositoryImpl<T, ID> extends SQLService implements SQLEnt
             Object... args
     ) {
         try (
-                Connection conn = write.getConnection();
+                Connection conn = sqlStoreService.getDataSource(false).getConnection();
         ) {
 
             PreparedStatement ps = conn.prepareStatement(sqlStore.delete);

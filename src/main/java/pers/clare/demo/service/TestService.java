@@ -2,10 +2,8 @@ package pers.clare.demo.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import pers.clare.core.sqlquery.SQLEntityService;
 import pers.clare.demo.data.SQLQueryConfig;
 import pers.clare.demo.data.entity.Test;
-import pers.clare.demo.data.entity.User;
 import pers.clare.demo.data.repository.TestRepository;
 import pers.clare.demo.data.sql.TestEntityRepository;
 

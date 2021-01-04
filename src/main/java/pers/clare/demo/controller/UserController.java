@@ -4,12 +4,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
-import pers.clare.core.sqlquery.SQLQueryService;
 import pers.clare.demo.data.entity.User;
-import pers.clare.demo.data.repository.UserRepository;
 import pers.clare.demo.service.UserService;
-
-import java.util.List;
 
 @RequestMapping("user")
 @RestController

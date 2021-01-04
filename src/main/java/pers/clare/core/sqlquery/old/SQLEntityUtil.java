@@ -1,13 +1,14 @@
-package pers.clare.core.sqlquery;
+package pers.clare.core.sqlquery.old;
 
-import java.lang.reflect.*;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 public class SQLEntityUtil {
@@ -23,6 +24,7 @@ public class SQLEntityUtil {
         return index;
     }
 
+
     public static <T> T toInstance(Map<Integer, Constructor<T>> constructorMap, ResultSet rs) throws Exception {
         if (rs.next()) {
             return buildInstance(findConstructor(constructorMap, rs.getMetaData()), rs);
@@ -30,10 +32,20 @@ public class SQLEntityUtil {
         return null;
     }
 
+    public static <T> Set<T> toSetInstance(Map<Integer, Constructor<T>> constructorMap, ResultSet rs) throws Exception {
+        Set<T> result = new HashSet<>();
+        Constructor<T> constructor = findConstructor(constructorMap, rs.getMetaData());
+        while (rs.next()) {
+            result.add(buildInstance(constructor, rs));
+        }
+        return result;
+    }
+
     public static <T> List<T> toInstances(Map<Integer, Constructor<T>> constructorMap, ResultSet rs) throws Exception {
         List<T> list = new ArrayList<>();
+        Constructor<T> constructor = findConstructor(constructorMap, rs.getMetaData());
         while (rs.next()) {
-            list.add(buildInstance(findConstructor(constructorMap, rs.getMetaData()), rs));
+            list.add(buildInstance(constructor, rs));
         }
         return list;
     }

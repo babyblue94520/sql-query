@@ -1,8 +1,7 @@
-package pers.clare.core.sqlquery;
+package pers.clare.core.sqlquery.old;
 
 import lombok.extern.log4j.Log4j2;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 
@@ -17,13 +16,19 @@ public class SQLQuery {
 
     private final Map<String, Integer> keyIndex;
 
+    private final Integer[] inIndex;
+
+    private final int keyCount;
+
     final Object[] values;
 
 
-    SQLQuery(char[][] sqlParts, Map<String, Integer> keyIndex) {
+    SQLQuery(char[][] sqlParts, Map<String, Integer> keyIndex, Integer[] inIndex) {
         this.sqlParts = sqlParts;
         this.keyIndex = keyIndex;
-        this.values = new Object[sqlParts.length];
+        this.inIndex = inIndex;
+        this.keyCount = keyIndex.size();
+        this.values = new Object[keyCount];
     }
 
     public SQLQuery value(String key, Object value) {
@@ -45,10 +50,13 @@ public class SQLQuery {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         char[] cs;
+        Integer in;
         for (int i = 0, l = sqlParts.length; i < l; i++) {
             cs = sqlParts[i];
             if (cs == null) {
-                append(sb, values[i]);
+                in = inIndex[i];
+                if (in == null) continue;
+                appendIn(sb, values[in]);
             } else {
                 sb.append(cs);
             }
@@ -56,7 +64,7 @@ public class SQLQuery {
         return sb.toString();
     }
 
-    private static void append(
+    private static void appendIn(
             StringBuilder sb
             , Object value
     ) {
@@ -66,24 +74,9 @@ public class SQLQuery {
             appendInValue(sb, value);
             sb.deleteCharAt(sb.length() - 1);
         } else {
-            appendValue(sb, value);
-        }
-    }
-
-    private static void appendValue(
-            StringBuilder sb
-            , Object value
-    ) {
-        if (value instanceof String) {
-            sb.append('\'');
-            char[] cs = ((String) value).toCharArray();
-            for (char c : cs) {
-                sb.append(c);
-                if (c == '\'') sb.append('\'');
-            }
-            sb.append('\'');
-        } else {
-            sb.append(value);
+            sb.append('(');
+            appendInValue(sb, value);
+            sb.deleteCharAt(sb.length() - 1).append(')');
         }
     }
 
@@ -103,30 +96,30 @@ public class SQLQuery {
             sb.append('(');
             if (value instanceof Object[]) {
                 Object[] vs = (Object[]) value;
-                if (vs.length == 0) throw new IllegalArgumentException("SQL WHERE IN doesn't empty value");
+                if (vs.length == 0) throw new IllegalArgumentException("SQL WHERE IN does't empty value");
                 for (Object v : vs) appendInValue(sb, v);
             } else if (value instanceof int[]) {
                 int[] vs = (int[]) value;
-                if (vs.length == 0) throw new IllegalArgumentException("SQL WHERE IN doesn't empty value");
+                if (vs.length == 0) throw new IllegalArgumentException("SQL WHERE IN does't empty value");
                 for (int v : vs) appendInValue(sb, v);
             } else if (value instanceof long[]) {
                 long[] vs = (long[]) value;
-                if (vs.length == 0) throw new IllegalArgumentException("SQL WHERE IN doesn't empty value");
+                if (vs.length == 0) throw new IllegalArgumentException("SQL WHERE IN does't empty value");
                 for (long v : vs) appendInValue(sb, v);
             } else if (value instanceof char[]) {
                 char[] vs = (char[]) value;
-                if (vs.length == 0) throw new IllegalArgumentException("SQL WHERE IN doesn't empty value");
+                if (vs.length == 0) throw new IllegalArgumentException("SQL WHERE IN does't empty value");
                 for (char v : vs) appendInValue(sb, v);
             }
             sb.deleteCharAt(sb.length() - 1).append(')');
         } else if (Collection.class.isAssignableFrom(valueClass)) {
             Collection<Object> vs = (Collection<Object>) value;
-            if (vs.size() == 0) throw new IllegalArgumentException("SQL WHERE IN doesn't empty value");
+            if (vs.size() == 0) throw new IllegalArgumentException("SQL WHERE IN does't empty value");
             sb.append('(');
             for (Object v : vs) appendInValue(sb, v);
             sb.deleteCharAt(sb.length() - 1).append(')');
         } else {
-            appendValue(sb, value);
+            sb.append('?');
         }
         sb.append(',');
     }

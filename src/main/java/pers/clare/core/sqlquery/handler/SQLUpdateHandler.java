@@ -1,17 +1,19 @@
 package pers.clare.core.sqlquery.handler;
 
-import lombok.AllArgsConstructor;
-import org.aopalliance.intercept.MethodInterceptor;
-import org.aopalliance.intercept.MethodInvocation;
-import pers.clare.core.sqlquery.SQLService;
+import pers.clare.core.sqlquery.*;
 
-@AllArgsConstructor
-public class SQLUpdateHandler implements MethodInterceptor {
-    private String sql;
-    private SQLService sqlService;
+import java.lang.reflect.Method;
+
+public class SQLUpdateHandler extends SQLHandler {
+
+    public SQLUpdateHandler(Method method, String sql, SQLStoreService sqlStoreService) {
+        super(method, sql, sqlStoreService);
+    }
 
     @Override
-    public Object invoke(MethodInvocation methodInvocation) {
-        return sqlService.update(sql, methodInvocation.getArguments());
+    protected Object doInvoke(String sql, Object[] arguments) {
+        return sqlStoreService.update(sql, arguments);
     }
+
+
 }

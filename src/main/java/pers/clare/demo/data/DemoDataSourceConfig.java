@@ -44,7 +44,6 @@ public class DemoDataSourceConfig {
     public static final String EntityManagerFactoryName = Prefix + "EntityManagerFactory";
     public static final String TransactionManagerName = Prefix + "TransactionManager";
     public static final String JdbcTemplateName = Prefix + "JdbcTemplate";
-    public static final String EntityManagerName = Prefix + "EntityManager";
     public static final String PersistenceUnitName = Prefix + "PersistenceUnit";
 
 

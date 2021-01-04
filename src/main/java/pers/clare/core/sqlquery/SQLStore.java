@@ -19,6 +19,7 @@ public class SQLStore<T> {
     Method[] insertMethods;
     Method[] updateMethods;
     String count;
+    String all;
     String select;
     String insert;
     String update;
