@@ -96,7 +96,7 @@ public class PreparedStatementUtil {
 
     public static int setValue(
             PreparedStatement ps
-            , Object[] parameters
+            , Object ...parameters
     ) throws SQLException {
         int index = 1;
         if (parameters == null || parameters.length == 0) return index;

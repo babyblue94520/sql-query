@@ -10,6 +10,8 @@ import org.springframework.validation.annotation.Validated;
 import pers.clare.core.sqlquery.*;
 import pers.clare.core.sqlquery.annotation.Sql;
 import pers.clare.demo.data.entity.User;
+import pers.clare.demo.data.repository.UserRepository;
+import pers.clare.demo.data.sql.UserCrudRepository;
 
 
 /**
@@ -26,32 +28,9 @@ public class UserService {
 
     @Sql
     private SQLQueryReplaceBuilder findAll;
-    @Sql
-    private SQLQueryReplaceBuilder findAll1;
-    @Sql
-    private SQLQueryReplaceBuilder findAll2;
-    @Sql
-    private SQLQueryReplaceBuilder findAll3;
-    @Sql
-    private SQLQueryReplaceBuilder findAll4;
-    @Sql
-    private SQLQueryReplaceBuilder findAll5;
-    @Sql
-    private SQLQueryReplaceBuilder findAll6;
-    @Sql
-    private SQLQueryReplaceBuilder findAll7;
-    @Sql
-    private SQLQueryReplaceBuilder findAll8;
-    @Sql
-    private SQLQueryReplaceBuilder findAll9;
-    @Sql
-    private SQLQueryReplaceBuilder findAll10;
 
     @Autowired
-    private SQLEntityService sqlEntityService;
-
-    @Autowired
-    private SQLQueryService sqlQueryService;
+    private UserRepository userRepository;
 
     {
         SQLInjector.inject(this);
@@ -83,11 +62,7 @@ public class UserService {
                 .value("name", name)
                 .value("roleId", roleId)
                 .value("account", account);
-        return sqlQueryService.findAll(User.class, query, pageable);
-    }
-
-    public User find(Long id) {
-        return sqlEntityService.find(User.class, id);
+        return null;
     }
 
     public User insert(
@@ -100,14 +75,14 @@ public class UserService {
         user.setCreateTime(t);
         user.setCreateUser(1L);
         user.setLoginFailCount(0);
-        sqlEntityService.insert(user);
-        return sqlEntityService.find(User.class, user.getId());
+        userRepository.insert(user);
+        return userRepository.insert(user);
     }
 
-    public int update(
+    public User update(
             User user
     ) {
-        return sqlEntityService.update(user);
+        return userRepository.update(user);
     }
 
 }

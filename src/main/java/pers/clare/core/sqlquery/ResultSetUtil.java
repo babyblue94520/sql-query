@@ -31,6 +31,16 @@ public class ResultSetUtil {
         return null;
     }
 
+    public static Map<String, Object> toMap(Statement statement) throws SQLException {
+        try{
+            ResultSet rs = statement.getResultSet();
+            if (rs.next()) return toMap(rs, getNames(rs));
+            return null;
+        }finally {
+            statement.close();
+        }
+    }
+
 
     public static <T> Map<String, T> toMap(Class<T> valueClass, ResultSet rs) throws SQLException {
         if (rs.next()) {

@@ -1,15 +1,14 @@
 package pers.clare.demo.data.sql;
 
-import org.springframework.data.jpa.repository.Query;
 import pers.clare.core.sqlquery.annotation.Sql;
-import pers.clare.core.sqlquery.jpa.SQLEntityRepository;
+import pers.clare.core.sqlquery.jpa.SQLCrudRepository;
+import pers.clare.core.sqlquery.jpa.SQLRepository;
 import pers.clare.demo.data.entity.Test;
 
-import java.util.List;
 import java.util.Map;
 
 
-public interface TestEntityRepository extends SQLEntityRepository<Test, Long> {
+public interface TestRepository extends SQLRepository {
 
     @Sql(query = "select 1")
     public Map<String,Object> aaa();

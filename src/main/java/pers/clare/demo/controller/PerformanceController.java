@@ -3,17 +3,18 @@ package pers.clare.demo.controller;
 import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import pers.clare.core.sqlquery.PreparedStatementUtil;
 import pers.clare.core.sqlquery.ResultSetUtil;
 import pers.clare.core.sqlquery.exception.SQLQueryException;
 import pers.clare.demo.bo.Test2;
 import pers.clare.demo.data.entity.Test;
+import pers.clare.demo.data.repository.TestJpaRepository;
 import pers.clare.demo.data.sql.TestCrudRepository;
 import pers.clare.demo.data.sql.TestRepository;
 import pers.clare.demo.service.TestService;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,49 +24,15 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-@RequestMapping("test")
+@RequestMapping("per")
 @RestController
-public class TestController {
+public class PerformanceController {
     @Autowired
-    private TestService testService;
-
+    private DataSource dataSource;
     @Autowired
     private TestCrudRepository testCrudRepository;
     @Autowired
-    private TestRepository testRepository;
-
-    @Autowired
-    private DataSource dataSource;
-
-    @PostMapping("id")
-    public Object find(Long id) {
-        return testRepository.bbb(id);
-    }
-
-    @PostMapping(value = "aaa", consumes = "application/x-www-form-urlencoded")
-    public Test2 add(Test2 test) {
-        return test;
-    }
-
-    @PostMapping(value = "1")
-    public Test add(@RequestBody Test test) {
-        return testService.insert(test);
-    }
-
-    @PutMapping("1")
-    public Test modify(Test test) {
-        return testService.update(test);
-    }
-
-    @DeleteMapping("1")
-    public int remove(Test test) {
-        return testService.delete(test);
-    }
-
-    @PostMapping("2")
-    public Test add2() {
-        return testService.insert2(new Test(null, "test" + 1));
-    }
+    private TestJpaRepository testJapRepository;
 
     @GetMapping("1")
     public String test(
@@ -81,7 +48,7 @@ public class TestController {
         for (int t = 0; t < thread; t++) {
             tasks.add(() -> {
                 for (int i = 0; i < max; i++) {
-                    testService.insert(new Test(null, "test" + i));
+                    testCrudRepository.findById(1);
                 }
                 return max;
             });
@@ -112,7 +79,7 @@ public class TestController {
         for (int t = 0; t < thread; t++) {
             tasks.add(() -> {
                 for (int i = 0; i < max; i++) {
-                    testService.insert2(new Test(null, "test" + i));
+                    testJapRepository.findById(1L);
                 }
                 return max;
             });

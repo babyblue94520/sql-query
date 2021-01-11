@@ -7,7 +7,6 @@ import lombok.Getter;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.*;
 
 @Getter
@@ -15,15 +14,17 @@ public class SQLStore<T> {
     Map<Integer, Constructor<T>> constructorMap;
     boolean crud = false;
     Field autoKey;
-    Method[] keyMethods;
-    Method[] insertMethods;
-    Method[] updateMethods;
+    Field[] keyFields;
+    Field[] insertFields;
+    Field[] updateFields;
     String count;
-    String all;
+    SQLQueryBuilder countById;
     String select;
-    String insert;
-    String update;
-    String delete;
+    SQLQueryBuilder selectById;
+    SQLQueryBuilder insert;
+    SQLQueryBuilder update;
+    String deleteAll;
+    SQLQueryBuilder deleteById;
 
     public SQLStore(Map<Integer, Constructor<T>> constructorMap) {
         this.constructorMap = constructorMap;
@@ -33,25 +34,31 @@ public class SQLStore<T> {
             Map<Integer, Constructor<T>> constructorMap
             , boolean crud
             , Field autoKey
-            , Method[] keyMethods
-            , Method[] insertMethods
-            , Method[] updateMethods
+            , Field[] keyFields
+            , Field[] insertFields
+            , Field[] updateFields
             , String count
+            , SQLQueryBuilder countById
             , String select
-            , String insert
-            , String update
-            , String delete
+            , SQLQueryBuilder selectById
+            , SQLQueryBuilder insert
+            , SQLQueryBuilder update
+            , String deleteAll
+            , SQLQueryBuilder deleteById
     ) {
         this.constructorMap = constructorMap;
         this.crud = crud;
         this.autoKey = autoKey;
-        this.keyMethods = keyMethods;
-        this.insertMethods = insertMethods;
-        this.updateMethods = updateMethods;
+        this.keyFields = keyFields;
+        this.insertFields = insertFields;
+        this.updateFields = updateFields;
         this.count = count;
+        this.countById = countById;
         this.select = select;
+        this.selectById = selectById;
         this.insert = insert;
         this.update = update;
-        this.delete = delete;
+        this.deleteAll = deleteAll;
+        this.deleteById = deleteById;
     }
 }

@@ -20,10 +20,10 @@ import java.util.Set;
 @Log4j2
 @Setter
 @Getter
-public class ClassPathSQLEntityScanner extends ClassPathBeanDefinitionScanner {
+public class ClassPathSQLScanner extends ClassPathBeanDefinitionScanner {
     private AnnotationAttributes annotationAttributes;
 
-    public ClassPathSQLEntityScanner(BeanDefinitionRegistry registry) {
+    public ClassPathSQLScanner(BeanDefinitionRegistry registry) {
         super(registry);
     }
 
@@ -72,7 +72,7 @@ public class ClassPathSQLEntityScanner extends ClassPathBeanDefinitionScanner {
 
     private void processBeanDefinitions(Set<BeanDefinitionHolder> beanDefinitions) {
         GenericBeanDefinition definition;
-        Class<? extends SQLEntityRepositoryFactoryBean> factoryBeanClass = annotationAttributes.getClass("factoryBean");
+        Class<? extends SQLRepositoryFactoryBean> factoryBeanClass = annotationAttributes.getClass("factoryBean");
         for (BeanDefinitionHolder holder : beanDefinitions) {
             definition = (GenericBeanDefinition) holder.getBeanDefinition();
             String beanClassName = definition.getBeanClassName();

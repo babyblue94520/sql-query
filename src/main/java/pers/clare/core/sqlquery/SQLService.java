@@ -54,7 +54,7 @@ public class SQLService {
             , Object... parameters
     ) {
         try (
-                Connection conn = getDataSource(readonly).getConnection();
+                Connection conn = getDataSource(readonly).getConnection()
         ) {
             Map<String, Object> result = ResultSetUtil.toMap(PreparedStatementUtil.query(conn, sql, parameters));
             if (retry(result, readonly)) {
@@ -81,7 +81,7 @@ public class SQLService {
             , Object... parameters
     ) {
         try (
-                Connection conn = getDataSource(readonly).getConnection();
+                Connection conn = getDataSource(readonly).getConnection()
         ) {
             Map<String, T> result = ResultSetUtil.toMap(valueClass, PreparedStatementUtil.query(conn, sql, parameters));
             if (retry(result, readonly)) {
@@ -108,7 +108,7 @@ public class SQLService {
             , Object... parameters
     ) {
         try (
-                Connection conn = getDataSource(readonly).getConnection();
+                Connection conn = getDataSource(readonly).getConnection()
         ) {
             return ResultSetUtil.toSet(valueClass, PreparedStatementUtil.query(conn, sql, parameters));
         } catch (Exception e) {
@@ -131,7 +131,7 @@ public class SQLService {
             , Object... parameters
     ) {
         try (
-                Connection conn = getDataSource(readonly).getConnection();
+                Connection conn = getDataSource(readonly).getConnection()
         ) {
             T result = ResultSetUtil.to(clazz, PreparedStatementUtil.query(conn, sql, parameters));
             if (retry(result, readonly)) {
@@ -158,7 +158,7 @@ public class SQLService {
             , Object... parameters
     ) {
         try (
-                Connection conn = getDataSource(readonly).getConnection();
+                Connection conn = getDataSource(readonly).getConnection()
         ) {
             return ResultSetUtil.toMapList(clazz, PreparedStatementUtil.query(conn, sql, parameters));
         } catch (Exception e) {
@@ -228,7 +228,7 @@ public class SQLService {
             , Object... parameters
     ) {
         try (
-                Connection conn = write.getConnection();
+                Connection conn = write.getConnection()
         ) {
             Statement s = PreparedStatementUtil.executeInsert(conn, sql, parameters);
             if (s.getUpdateCount() == 0) return null;
@@ -244,7 +244,7 @@ public class SQLService {
             , Object... parameters
     ) {
         try (
-                Connection conn = write.getConnection();
+                Connection conn = write.getConnection()
         ) {
             return PreparedStatementUtil.execute(conn, sql, parameters);
         } catch (SQLException e) {

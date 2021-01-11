@@ -10,15 +10,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Log4j2
-public class SQLQueryMethodInterceptor implements MethodInterceptor {
+public class SQLMethodInterceptor implements MethodInterceptor {
     private Object target;
     private Map<Method, Method> methods;
     private final Map<Method, MethodInterceptor> queryMethods;
 
-    public SQLQueryMethodInterceptor(
+    public SQLMethodInterceptor(
             Class<?> interfaceClass
             , Object target
-            ,Map<Method, MethodInterceptor> queryMethods
+            , Map<Method, MethodInterceptor> queryMethods
     ) {
         this.target = target;
         this.queryMethods = queryMethods;
@@ -40,12 +40,12 @@ public class SQLQueryMethodInterceptor implements MethodInterceptor {
     @Override
     public Object invoke(MethodInvocation methodInvocation) throws Throwable {
         Method method = this.methods.get(methodInvocation.getMethod());
-        if (method == null){
+        if (method == null) {
             MethodInterceptor handler = queryMethods.get(methodInvocation.getMethod());
             if (handler == null)
                 throw new SQLQueryException(String.format("%s not found", methodInvocation.getMethod()));
             return handler.invoke(methodInvocation);
-        }else{
+        } else {
             return method.invoke(target, methodInvocation.getArguments());
         }
     }

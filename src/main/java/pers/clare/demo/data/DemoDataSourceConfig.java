@@ -23,7 +23,6 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
 
-@Profile("mysql")
 @Configuration(DemoDataSourceConfig.BeanName)
 @EnableJpaRepositories(
         entityManagerFactoryRef = DemoDataSourceConfig.EntityManagerFactoryName

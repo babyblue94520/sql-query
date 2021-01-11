@@ -8,18 +8,13 @@ import org.springframework.beans.factory.BeanClassLoaderAware;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.data.projection.DefaultMethodInvokingMethodInterceptor;
-import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.core.support.*;
 import pers.clare.core.sqlquery.*;
 
-import javax.sql.DataSource;
-
 @Log4j2
-public class SQLEntityRepositoryFactory implements BeanClassLoaderAware, BeanFactoryAware {
+public class SQLRepositoryFactory implements BeanClassLoaderAware, BeanFactoryAware {
     protected ClassLoader classLoader;
     protected BeanFactory beanFactory;
-    protected DataSource writeDataSource;
-    protected DataSource readDataSource;
 
     @Override
     public void setBeanClassLoader(ClassLoader classLoader) {
@@ -31,28 +26,28 @@ public class SQLEntityRepositoryFactory implements BeanClassLoaderAware, BeanFac
         this.beanFactory = beanFactory;
     }
 
-    public void setWriteDataSource(DataSource writeDataSource) {
-        this.writeDataSource = writeDataSource;
-    }
-
-    public void setReadDataSource(DataSource readDataSource) {
-        this.readDataSource = readDataSource;
-    }
-
     public <T> T getRepository(
             Class<T> repositoryInterface
             , SQLStoreService sqlStoreService
     ) {
-        SQLEntityRepositoryImpl target = new SQLEntityRepositoryImpl(repositoryInterface, sqlStoreService);
-
+        if (!SQLRepository.class.isAssignableFrom(repositoryInterface)) {
+            throw new Error(String.format("%s must inherit %s interface", repositoryInterface, SQLRepository.class.getSimpleName()));
+        }
         ProxyFactory result = new ProxyFactory();
+        Object target;
+        if (SQLCrudRepository.class.isAssignableFrom(repositoryInterface)) {
+            target = new SQLCrudCrudRepositoryImpl(repositoryInterface, sqlStoreService);
+            result.setInterfaces(repositoryInterface, SQLCrudRepository.class);
+        } else {
+            target = new Object();
+            result.setInterfaces(repositoryInterface, SQLRepository.class);
+        }
         result.setTarget(target);
-        result.setInterfaces(repositoryInterface, SQLEntityRepository.class);
+        result.addAdvisor(ExposeInvocationInterceptor.ADVISOR);
         if (MethodInvocationValidator.supports(repositoryInterface)) {
             result.addAdvice(new MethodInvocationValidator());
         }
-        result.addAdvisor(ExposeInvocationInterceptor.ADVISOR);
-        result.addAdvice(new SQLQueryMethodInterceptor(repositoryInterface, target, SQLQueryMethodFactory.create(repositoryInterface, sqlStoreService)));
+        result.addAdvice(new SQLMethodInterceptor(repositoryInterface, target, SQLMethodFactory.create(repositoryInterface, sqlStoreService)));
         if (DefaultMethodInvokingMethodInterceptor.hasDefaultMethods(repositoryInterface)) {
             result.addAdvice(new DefaultMethodInvokingMethodInterceptor());
         }
@@ -63,9 +58,5 @@ public class SQLEntityRepositoryFactory implements BeanClassLoaderAware, BeanFac
         }
 
         return repository;
-    }
-
-    protected RepositoryMetadata getRepositoryMetadata(Class<?> repositoryInterface) {
-        return AbstractRepositoryMetadata.getMetadata(repositoryInterface);
     }
 }

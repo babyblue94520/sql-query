@@ -12,9 +12,9 @@ import java.lang.reflect.ParameterizedType;
 import java.util.*;
 
 
-public class SQLQueryMethodFactory {
+public class SQLMethodFactory {
 
-    private SQLQueryMethodFactory() {
+    private SQLMethodFactory() {
     }
 
     public static Map<Method, MethodInterceptor> create(

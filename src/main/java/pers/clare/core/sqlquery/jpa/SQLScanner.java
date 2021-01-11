@@ -21,8 +21,6 @@ import org.springframework.core.annotation.AnnotationAttributes;
 import org.springframework.core.env.Environment;
 import org.springframework.util.StringUtils;
 
-import java.lang.annotation.Annotation;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -30,7 +28,7 @@ import static org.springframework.util.Assert.notNull;
 
 @Getter
 @Setter
-public class SQLEntityScanner implements BeanDefinitionRegistryPostProcessor, InitializingBean, ApplicationContextAware, BeanNameAware {
+public class SQLScanner implements BeanDefinitionRegistryPostProcessor, InitializingBean, ApplicationContextAware, BeanNameAware {
 
     private ApplicationContext applicationContext;
     private String beanName;
@@ -58,7 +56,7 @@ public class SQLEntityScanner implements BeanDefinitionRegistryPostProcessor, In
             processPropertyPlaceHolders();
         }
 
-        ClassPathSQLEntityScanner scanner = new ClassPathSQLEntityScanner(beanDefinitionRegistry);
+        ClassPathSQLScanner scanner = new ClassPathSQLScanner(beanDefinitionRegistry);
         scanner.setAnnotationAttributes(this.annotationAttributes);
         scanner.setResourceLoader(this.applicationContext);
         scanner.registerFilters();

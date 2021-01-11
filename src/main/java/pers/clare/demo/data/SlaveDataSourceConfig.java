@@ -12,7 +12,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 
 import javax.sql.DataSource;
 
-@Profile("mysql")
 @Configuration(SlaveDataSourceConfig.BeanName)
 public class SlaveDataSourceConfig {
     public static final String Prefix = "slave";

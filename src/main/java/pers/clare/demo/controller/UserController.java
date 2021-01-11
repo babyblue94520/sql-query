@@ -23,7 +23,7 @@ public class UserController {
         return userService.insert(user);
     }
     @PatchMapping("name")
-    public Integer modify(User user) {
+    public Object modify(User user) {
         return userService.update(user);
     }
 //

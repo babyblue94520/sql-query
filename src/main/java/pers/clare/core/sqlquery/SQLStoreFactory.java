@@ -7,13 +7,12 @@ import javax.persistence.Column;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Transient;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.lang.reflect.*;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.util.*;
 
 public interface SQLStoreFactory {
 
@@ -33,7 +32,7 @@ public interface SQLStoreFactory {
                 || Collection.class.isAssignableFrom(clazz)
                 || clazz.isEnum()
                 || clazz.isInterface()
-        ;
+                ;
     }
 
     static <T> SQLStore<T> build(Class<T> clazz, boolean crud) {
@@ -59,9 +58,9 @@ public interface SQLStoreFactory {
             Field[] fields = clazz.getDeclaredFields();
             int length = fields.length;
             int keyCount = 0, insertCount = 0, updateCount = 0;
-            Method[] keyMethods = new Method[length];
-            Method[] insertMethods = new Method[length];
-            Method[] updateMethods = new Method[length];
+            Field[] keyMethods = new Field[length];
+            Field[] insertMethods = new Field[length];
+            Field[] updateMethods = new Field[length];
             Column column;
             Id id;
             String name, getterName;
@@ -74,63 +73,57 @@ public interface SQLStoreFactory {
                 }
             }
             Field autoKey = null;
-            Method method;
             for (Field field : fields) {
                 if (field.getAnnotation(Transient.class) != null) continue;
-                getterName = SQLUtil.toGetterName(field.getName());
-                method = methodMap.get(getterName);
-                if (method == null) continue;
+                field.setAccessible(true);
                 column = field.getAnnotation(Column.class);
                 name = column == null ? SQLUtil.convert(field.getName()) : column.name();
                 id = field.getAnnotation(Id.class);
                 if (id == null) {
                     if (column == null) {
-                        insertMethods[insertCount++] = method;
-                        insertColumns.append(name)
-                                .append(',');
-                        values.append("?,");
-                        updateMethods[updateCount++] = method;
-                        updateSet.append(name)
-                                .append("=?,");
+                        insertMethods[insertCount++] = field;
+                        insertColumns.append(name).append(',');
+                        appendValue(values, name);
+                        updateMethods[updateCount++] = field;
+                        appendSet(updateSet, name);
                     } else {
                         if (column.insertable()) {
-                            insertMethods[insertCount++] = method;
-                            insertColumns.append(name)
-                                    .append(',');
-                            values.append("?,");
+                            insertMethods[insertCount++] = field;
+                            insertColumns.append(name).append(',');
+                            appendValue(values, name);
                         }
                         if (column.updatable()) {
-                            updateMethods[updateCount++] = method;
-                            updateSet.append(name)
-                                    .append("=?,");
+                            updateMethods[updateCount++] = field;
+                            appendSet(updateSet, name);
                         }
                     }
                 } else {
                     if (field.getAnnotation(GeneratedValue.class) == null) {
-                        insertMethods[insertCount++] = method;
-                        insertColumns.append(name)
-                                .append(',');
-                        values.append("?,");
+                        insertMethods[insertCount++] = field;
+                        insertColumns.append(name).append(',');
+                        appendValue(values, name);
                     } else {
                         autoKey = field;
                         autoKey.setAccessible(true);
                     }
-                    keyMethods[keyCount++] = method;
+                    keyMethods[keyCount++] = field;
                     whereId.append(name)
-                            .append("=? and ");
+                            .append('=')
+                            .append(':')
+                            .append(field.getName())
+                            .append(" and ");
                 }
-                selectColumns.append(name)
-                        .append(',');
+                selectColumns.append(name).append(',');
 
             }
-            Method[] temp = insertMethods;
-            insertMethods = new Method[insertCount];
+            Field[] temp = insertMethods;
+            insertMethods = new Field[insertCount];
             System.arraycopy(temp, 0, insertMethods, 0, insertCount);
             temp = updateMethods;
-            updateMethods = new Method[updateCount];
+            updateMethods = new Field[updateCount];
             System.arraycopy(temp, 0, updateMethods, 0, updateCount);
             temp = keyMethods;
-            keyMethods = new Method[keyCount];
+            keyMethods = new Field[keyCount];
             System.arraycopy(temp, 0, keyMethods, 0, keyCount);
 
             selectColumns.delete(selectColumns.length() - 1, selectColumns.length());
@@ -144,6 +137,13 @@ public interface SQLStoreFactory {
             int index;
 
             // count(*)
+            chars = new char[21 + tl];
+            index = 0;
+            "select count(*) from ".getChars(0, 21, chars, index);
+            index += 6;
+            tableName.getChars(0, tl, chars, index);
+            String count = new String(chars);
+            // countById(*)
             chars = new char[21 + tl + wl];
             index = 0;
             "select count(*) from ".getChars(0, 21, chars, index);
@@ -151,7 +151,19 @@ public interface SQLStoreFactory {
             tableName.getChars(0, tl, chars, index);
             index += tl;
             whereId.getChars(0, wl, chars, index);
-            String count = new String(chars);
+            SQLQueryBuilder countById = new SQLQueryBuilder(chars);
+
+            // select all
+            chars = new char[13 + tl + scl];
+            index = 0;
+            "select ".getChars(0, 7, chars, index);
+            index += 7;
+            selectColumns.getChars(0, scl, chars, index);
+            index += scl;
+            " from ".getChars(0, 6, chars, index);
+            index += 6;
+            tableName.getChars(0, tl, chars, index);
+            String select = new String(chars);
 
             // select one
             chars = new char[13 + tl + scl + wl];
@@ -165,7 +177,7 @@ public interface SQLStoreFactory {
             tableName.getChars(0, tl, chars, index);
             index += tl;
             whereId.getChars(0, wl, chars, index);
-            String select = new String(chars);
+            SQLQueryBuilder selectById = new SQLQueryBuilder(chars);
 
             // insert
             chars = new char[14 + tl + icl + vl];
@@ -179,7 +191,7 @@ public interface SQLStoreFactory {
             index += icl;
             chars[index++] = ')';
             values.getChars(0, vl, chars, index);
-            String insert = new String(chars);
+            SQLQueryBuilder insert = new SQLQueryBuilder(chars);
 
             // update
             chars = new char[12 + tl + ul + wl];
@@ -193,9 +205,17 @@ public interface SQLStoreFactory {
             updateSet.getChars(0, ul, chars, index);
             index += ul;
             whereId.getChars(0, wl, chars, index);
-            String update = new String(chars);
+            SQLQueryBuilder update = new SQLQueryBuilder(chars);
 
             // delete
+            chars = new char[12 + tl];
+            index = 0;
+            "delete from ".getChars(0, 12, chars, index);
+            index += 12;
+            tableName.getChars(0, tl, chars, index);
+            String deleteAll = new String(chars);
+
+            // deleteById
             chars = new char[12 + tl + wl];
             index = 0;
             "delete from ".getChars(0, 12, chars, index);
@@ -203,17 +223,27 @@ public interface SQLStoreFactory {
             tableName.getChars(0, tl, chars, index);
             index += tl;
             whereId.getChars(0, wl, chars, index);
-            String delete = new String(chars);
-//            System.out.println(select);
-//            System.out.println(insert);
-//            System.out.println(update);
-//            System.out.println(delete);
-            store = new SQLStore(constructorMap, crud, autoKey, keyMethods, insertMethods, updateMethods, count, select, insert, update, delete);
+            SQLQueryBuilder deleteById = new SQLQueryBuilder(chars);
+
+            store = new SQLStore(constructorMap, crud, autoKey, keyMethods, insertMethods, updateMethods, count, countById, select, selectById, insert, update, deleteAll, deleteById);
         } else {
             store = new SQLStore(constructorMap);
         }
         entityMap.put(clazz, store);
         return store;
+    }
+
+    private static void appendValue(StringBuilder sb, String name) {
+        sb.append(':')
+                .append(name)
+                .append(',');
+    }
+
+    private static void appendSet(StringBuilder sb, String name) {
+        sb.append('=')
+                .append(':')
+                .append(name)
+                .append(',');
     }
 
     public static void main(String[] args) {

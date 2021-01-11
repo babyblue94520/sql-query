@@ -9,14 +9,14 @@ import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
-import pers.clare.core.sqlquery.annotation.SQLStoreScan;
+import pers.clare.core.sqlquery.annotation.SQLScan;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class SQLEntityScanRegistrar implements ImportBeanDefinitionRegistrar, ResourceLoaderAware {
+public class SQLScanRegistrar implements ImportBeanDefinitionRegistrar, ResourceLoaderAware {
 
     /**
      * {@inheritDoc}
@@ -35,7 +35,7 @@ public class SQLEntityScanRegistrar implements ImportBeanDefinitionRegistrar, Re
     @Override
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
         AnnotationAttributes SQLEntityScanAttrs = AnnotationAttributes
-                .fromMap(importingClassMetadata.getAnnotationAttributes(SQLStoreScan.class.getName()));
+                .fromMap(importingClassMetadata.getAnnotationAttributes(SQLScan.class.getName()));
         if (SQLEntityScanAttrs != null) {
             registerBeanDefinitions(importingClassMetadata, SQLEntityScanAttrs, registry,
                     generateBaseBeanName(importingClassMetadata, 0));
@@ -48,7 +48,7 @@ public class SQLEntityScanRegistrar implements ImportBeanDefinitionRegistrar, Re
             , BeanDefinitionRegistry registry
             , String beanName
     ) {
-        BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(SQLEntityScanner.class);
+        BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(SQLScanner.class);
         builder.addPropertyValue("annotationAttributes", annotationAttributes);
 
         List<String> basePackages = new ArrayList<>();
@@ -71,7 +71,7 @@ public class SQLEntityScanRegistrar implements ImportBeanDefinitionRegistrar, Re
     }
 
     private static String generateBaseBeanName(AnnotationMetadata importingClassMetadata, int index) {
-        return importingClassMetadata.getClassName() + "#" + SQLEntityScanRegistrar.class.getSimpleName() + "#" + index;
+        return importingClassMetadata.getClassName() + "#" + SQLScanRegistrar.class.getSimpleName() + "#" + index;
     }
 
     private static String getDefaultBasePackage(AnnotationMetadata importingClassMetadata) {
