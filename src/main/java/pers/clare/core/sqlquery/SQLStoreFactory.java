@@ -63,7 +63,7 @@ public interface SQLStoreFactory {
             Field[] updateMethods = new Field[length];
             Column column;
             Id id;
-            String name, getterName;
+            String columnName, fieldName;
 
             Map<String, Method> methodMap = new HashMap<>();
             Method[] methods = clazz.getDeclaredMethods();
@@ -77,43 +77,44 @@ public interface SQLStoreFactory {
                 if (field.getAnnotation(Transient.class) != null) continue;
                 field.setAccessible(true);
                 column = field.getAnnotation(Column.class);
-                name = column == null ? SQLUtil.convert(field.getName()) : column.name();
+                fieldName = field.getName();
+                columnName = column == null ? SQLUtil.convert(field.getName()) : column.name();
                 id = field.getAnnotation(Id.class);
                 if (id == null) {
                     if (column == null) {
                         insertMethods[insertCount++] = field;
-                        insertColumns.append(name).append(',');
-                        appendValue(values, name);
+                        insertColumns.append(columnName).append(',');
+                        appendValue(values, fieldName);
                         updateMethods[updateCount++] = field;
-                        appendSet(updateSet, name);
+                        appendSet(updateSet,columnName, fieldName);
                     } else {
                         if (column.insertable()) {
                             insertMethods[insertCount++] = field;
-                            insertColumns.append(name).append(',');
-                            appendValue(values, name);
+                            insertColumns.append(columnName).append(',');
+                            appendValue(values, fieldName);
                         }
                         if (column.updatable()) {
                             updateMethods[updateCount++] = field;
-                            appendSet(updateSet, name);
+                            appendSet(updateSet,columnName, fieldName);
                         }
                     }
                 } else {
                     if (field.getAnnotation(GeneratedValue.class) == null) {
                         insertMethods[insertCount++] = field;
-                        insertColumns.append(name).append(',');
-                        appendValue(values, name);
+                        insertColumns.append(columnName).append(',');
+                        appendValue(values, fieldName);
                     } else {
                         autoKey = field;
                         autoKey.setAccessible(true);
                     }
                     keyMethods[keyCount++] = field;
-                    whereId.append(name)
+                    whereId.append(columnName)
                             .append('=')
                             .append(':')
-                            .append(field.getName())
+                            .append(fieldName)
                             .append(" and ");
                 }
-                selectColumns.append(name).append(',');
+                selectColumns.append(columnName).append(',');
 
             }
             Field[] temp = insertMethods;
@@ -140,14 +141,14 @@ public interface SQLStoreFactory {
             chars = new char[21 + tl];
             index = 0;
             "select count(*) from ".getChars(0, 21, chars, index);
-            index += 6;
+            index += 21;
             tableName.getChars(0, tl, chars, index);
             String count = new String(chars);
             // countById(*)
             chars = new char[21 + tl + wl];
             index = 0;
             "select count(*) from ".getChars(0, 21, chars, index);
-            index += 6;
+            index += 21;
             tableName.getChars(0, tl, chars, index);
             index += tl;
             whereId.getChars(0, wl, chars, index);
@@ -239,8 +240,9 @@ public interface SQLStoreFactory {
                 .append(',');
     }
 
-    private static void appendSet(StringBuilder sb, String name) {
-        sb.append('=')
+    private static void appendSet(StringBuilder sb, String column, String name) {
+        sb.append(column)
+                .append('=')
                 .append(':')
                 .append(name)
                 .append(',');

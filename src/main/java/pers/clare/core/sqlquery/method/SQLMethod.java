@@ -1,4 +1,4 @@
-package pers.clare.core.sqlquery.handler;
+package pers.clare.core.sqlquery.method;
 
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
@@ -9,7 +9,7 @@ import java.lang.reflect.Parameter;
 import java.util.HashMap;
 import java.util.Map;
 
-public abstract class SQLHandler implements MethodInterceptor {
+public abstract class SQLMethod implements MethodInterceptor {
     private static final Object[] emptyArguments = new Object[0];
     protected String sql;
     protected SQLStoreService sqlStoreService;
@@ -20,7 +20,7 @@ public abstract class SQLHandler implements MethodInterceptor {
     protected Method method;
     protected Parameter[] parameters;
 
-    public SQLHandler(Method method, String sql, SQLStoreService sqlStoreService) {
+    public SQLMethod(Method method, String sql, SQLStoreService sqlStoreService) {
         this.sql = sql;
         this.sqlStoreService = sqlStoreService;
         this.method = method;

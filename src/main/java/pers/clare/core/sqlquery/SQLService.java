@@ -5,6 +5,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import pers.clare.core.sqlquery.exception.SQLQueryException;
+import pers.clare.core.sqlquery.function.ResultSetHandler;
+import pers.clare.core.sqlquery.support.ConnectionReuse;
+import pers.clare.core.sqlquery.support.ConnectionReuseHolder;
 
 import javax.sql.DataSource;
 import java.sql.*;
@@ -18,6 +21,7 @@ public class SQLService {
     protected DataSource read;
 
     protected boolean hasRead;
+
 
     public SQLService(DataSource write) {
         this.write = write;
@@ -37,133 +41,184 @@ public class SQLService {
         return readonly ? read : write;
     }
 
-    protected boolean retry(Object result, boolean readonly) {
+    protected <T> boolean retry(T result, boolean readonly) {
         return result == null && readonly && hasRead;
     }
 
-    public Map<String, Object> find(
-            String sql
-            , Object... parameters
-    ) {
-        return find(false, sql, parameters);
-    }
 
-    public Map<String, Object> find(
-            boolean readonly
-            , String sql
-            , Object... parameters
-    ) {
-        try (
-                Connection conn = getDataSource(readonly).getConnection()
-        ) {
-            Map<String, Object> result = ResultSetUtil.toMap(PreparedStatementUtil.query(conn, sql, parameters));
-            if (retry(result, readonly)) {
-                return find(false, sql, parameters);
+    protected void close(ConnectionReuse connectionReuse, Connection connection) {
+        try {
+            if (!connectionReuse.isReuse() && connection != null) {
+                connection.close();
             }
-            return result;
         } catch (Exception e) {
             throw new SQLQueryException(e.getMessage(), e);
         }
+    }
+
+    protected ResultSet go(Connection connection, String sql, Object[] parameters) throws SQLException {
+        if (parameters.length == 0) {
+            return connection.createStatement().executeQuery(sql);
+        } else {
+            PreparedStatement ps = connection.prepareStatement(sql);
+            PreparedStatementUtil.setValue(ps, parameters);
+            return ps.executeQuery();
+        }
+    }
+
+    private <T, R> R queryHandler(
+            Boolean readonly
+            , String sql
+            , Class<T> valueType
+            , Object[] parameters
+            , ResultSetHandler<T, R> resultSetHandler
+    ) {
+        ConnectionReuse connectionReuse = ConnectionReuseHolder.get();
+        if (readonly && !connectionReuse.isReadonly()) {
+            readonly = false;
+        }
+        Connection connection = null;
+        try {
+            connection = connectionReuse.getConnection(getDataSource(readonly));
+            return doQueryHandler(connection, readonly, sql, valueType, parameters, resultSetHandler);
+        } catch (SQLQueryException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new SQLQueryException(e.getMessage(), e);
+        } finally {
+            close(connectionReuse, connection);
+        }
+    }
+
+    private <T, R> R doQueryHandler(
+            Connection connection
+            , Boolean readonly
+            , String sql
+            , Class<T> valueType
+            , Object[] parameters
+            , ResultSetHandler<T, R> resultSetHandler
+    ) throws Exception {
+        R result = resultSetHandler.apply(go(connection, sql, parameters), valueType);
+        if (retry(result, readonly)) {
+            return queryHandler(false, sql, valueType, parameters, resultSetHandler);
+        } else {
+            return result;
+        }
+    }
+
+    private final ResultSetHandler findHandler = this::findHandler;
+
+    private <T> T findHandler(ResultSet rs, Class<T> valueType) throws Exception {
+        return ResultSetUtil.to(valueType, rs);
+    }
+
+    private final ResultSetHandler findMapHandler = this::findMapHandler;
+
+    private <T> Map<String, T> findMapHandler(ResultSet rs, Class<T> valueType) throws Exception {
+        return ResultSetUtil.toMap(valueType, rs);
+    }
+
+    private final ResultSetHandler findSetHandler = this::findSetHandler;
+
+    private <T> Set<T> findSetHandler(ResultSet rs, Class<T> valueType) throws Exception {
+        return ResultSetUtil.toSet(valueType, rs);
+    }
+
+    private final ResultSetHandler findAllMapHandler = this::findAllMapHandler;
+
+    private <T> List<Map<String, T>> findAllMapHandler(ResultSet rs, Class<T> valueType) throws Exception {
+        return ResultSetUtil.toMapList(valueType, rs);
+    }
+
+    private final ResultSetHandler findAllHandler = this::findAllHandler;
+
+    private <T> List<T> findAllHandler(ResultSet rs, Class<T> valueType) throws Exception {
+        return ResultSetUtil.toList(valueType, rs);
     }
 
     public <T> Map<String, T> find(
             String sql
-            , Class<T> valueClass
+            , Class<T> valueType
             , Object... parameters
     ) {
-        return find(false, sql, valueClass, parameters);
+        return (Map<String, T>) queryHandler(false, sql, valueType, parameters, findMapHandler);
     }
 
     public <T> Map<String, T> find(
             boolean readonly
             , String sql
-            , Class<T> valueClass
+            , Class<T> valueType
             , Object... parameters
     ) {
-        try (
-                Connection conn = getDataSource(readonly).getConnection()
-        ) {
-            Map<String, T> result = ResultSetUtil.toMap(valueClass, PreparedStatementUtil.query(conn, sql, parameters));
-            if (retry(result, readonly)) {
-                return find(false, sql, valueClass, parameters);
-            }
-            return result;
-        } catch (Exception e) {
-            throw new SQLQueryException(e.getMessage(), e);
-        }
+        return (Map<String, T>) queryHandler(readonly, sql, valueType, parameters, findMapHandler);
     }
 
     public <T> Set<T> findSet(
             String sql
-            , Class<T> valueClass
+            , Class<T> valueType
             , Object... parameters
     ) {
-        return findSet(false, sql, valueClass, parameters);
+        return (Set<T>) queryHandler(false, sql, valueType, parameters, findSetHandler);
     }
 
     public <T> Set<T> findSet(
             boolean readonly
             , String sql
-            , Class<T> valueClass
+            , Class<T> valueType
             , Object... parameters
     ) {
-        try (
-                Connection conn = getDataSource(readonly).getConnection()
-        ) {
-            return ResultSetUtil.toSet(valueClass, PreparedStatementUtil.query(conn, sql, parameters));
-        } catch (Exception e) {
-            throw new SQLQueryException(e.getMessage(), e);
-        }
+        return (Set<T>) queryHandler(readonly, sql, valueType, parameters, findSetHandler);
     }
 
     public <T> T findFirst(
-            Class<T> clazz
+            Class<T> valueType
             , String sql
             , Object... parameters
     ) {
-        return findFirst(false, clazz, sql, parameters);
+        return (T) queryHandler(false, sql, valueType, parameters, findHandler);
     }
 
     public <T> T findFirst(
             boolean readonly
-            , Class<T> clazz
+            , Class<T> valueType
             , String sql
             , Object... parameters
     ) {
-        try (
-                Connection conn = getDataSource(readonly).getConnection()
-        ) {
-            T result = ResultSetUtil.to(clazz, PreparedStatementUtil.query(conn, sql, parameters));
-            if (retry(result, readonly)) {
-                return findFirst(false, clazz, sql, parameters);
-            }
-            return result;
-        } catch (Exception e) {
-            throw new SQLQueryException(e.getMessage(), e);
-        }
+        return (T) queryHandler(readonly, sql, valueType, parameters, findHandler);
     }
 
     public <T> List<Map<String, T>> findAllMap(
-            Class<T> clazz
+            Class<T> valueType
             , String sql
             , Object... parameters
     ) {
-        return findAllMap(false, clazz, sql, parameters);
+        return (List<Map<String, T>>) queryHandler(false, sql, valueType, parameters, findAllMapHandler);
     }
 
     public <T> List<Map<String, T>> findAllMap(
             boolean readonly
-            , Class<T> clazz
+            , Class<T> valueType
             , String sql
             , Object... parameters
     ) {
-        try (
-                Connection conn = getDataSource(readonly).getConnection()
-        ) {
-            return ResultSetUtil.toMapList(clazz, PreparedStatementUtil.query(conn, sql, parameters));
-        } catch (Exception e) {
-            throw new SQLQueryException(e.getMessage(), e);
-        }
+        return (List<Map<String, T>>) queryHandler(readonly, sql, valueType, parameters, findAllMapHandler);
+    }
+
+    public <T> List<T> findAll(
+            Class<T> valueType
+            , String sql
+            , Object... parameters
+    ) {
+        return (List<T>) queryHandler(false, sql, valueType, parameters, findAllHandler);
+    }
+
+    public <T> List<T> findAll(
+            boolean readonly
+            , Class<T> valueType
+            , String sql
+            , Object... parameters
+    ) {
+        return (List<T>) queryHandler(readonly, sql, valueType, parameters, findAllHandler);
     }
 
     public <T> Page<Map<String, T>> findAllMap(
@@ -199,43 +254,29 @@ public class SQLService {
         }
     }
 
-    public <T> List<T> findAll(
-            Class<T> clazz
-            , String sql
-            , Object... parameters
-    ) {
-        return findAll(false, clazz, sql, parameters);
-    }
-
-    public <T> List<T> findAll(
-            boolean readonly
-            , Class<T> clazz
-            , String sql
-            , Object... parameters
-    ) {
-        try (
-                Connection conn = getDataSource(readonly).getConnection()
-        ) {
-            return ResultSetUtil.toList(clazz, PreparedStatementUtil.query(conn, sql, parameters));
-        } catch (Exception e) {
-            throw new SQLQueryException(e.getMessage(), e);
-        }
-    }
-
     public <T> T insert(
             String sql
             , Class<T> keyType
             , Object... parameters
     ) {
-        try (
-                Connection conn = write.getConnection()
-        ) {
-            Statement s = PreparedStatementUtil.executeInsert(conn, sql, parameters);
-            if (s.getUpdateCount() == 0) return null;
-            ResultSet rs = s.getGeneratedKeys();
+        ConnectionReuse connectionReuse = ConnectionReuseHolder.get();
+        Connection connection = null;
+        try {
+            connection = connectionReuse.getConnection(write);
+            Statement statement;
+            if (parameters.length == 0) {
+                statement = connection.createStatement();
+                statement.execute(sql, Statement.RETURN_GENERATED_KEYS);
+            } else {
+                statement = PreparedStatementUtil.executeInsert(connection, sql, parameters);
+            }
+            if (statement.getUpdateCount() == 0) return null;
+            ResultSet rs = statement.getGeneratedKeys();
             return rs.next() ? rs.getObject(1, keyType) : null;
         } catch (SQLException e) {
             throw new SQLQueryException(e.getMessage(), e);
+        } finally {
+            close(connectionReuse, connection);
         }
     }
 
@@ -243,12 +284,21 @@ public class SQLService {
             String sql
             , Object... parameters
     ) {
-        try (
-                Connection conn = write.getConnection()
-        ) {
-            return PreparedStatementUtil.execute(conn, sql, parameters);
+        ConnectionReuse connectionReuse = ConnectionReuseHolder.get();
+        Connection connection = null;
+        try {
+            connection = connectionReuse.getConnection(write);
+            if (parameters.length == 0) {
+                return connection.createStatement().executeUpdate(sql);
+            } else {
+                PreparedStatement ps = connection.prepareStatement(sql);
+                PreparedStatementUtil.setValue(ps, parameters);
+                return ps.executeUpdate();
+            }
         } catch (SQLException e) {
             throw new SQLQueryException(e.getMessage(), e);
+        } finally {
+            close(connectionReuse, connection);
         }
     }
 }

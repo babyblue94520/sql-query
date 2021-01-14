@@ -1,9 +1,6 @@
 package pers.clare.demo.data.entity;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import pers.clare.core.sqlquery.SQLStore;
 import pers.clare.core.sqlquery.SQLStoreFactory;
 
@@ -12,6 +9,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 
+@ToString
 @Getter
 @Setter
 @AllArgsConstructor

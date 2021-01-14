@@ -1,13 +1,12 @@
-package pers.clare.core.sqlquery.handler;
+package pers.clare.core.sqlquery.method;
 
-import pers.clare.core.sqlquery.SQLService;
 import pers.clare.core.sqlquery.SQLStoreService;
 
 import java.lang.reflect.Method;
 
-public class MapListResultSetHandler extends SQLSelectHandler  {
+public class MapListResultSetMethod extends SQLSelectMethod {
 
-    public MapListResultSetHandler(Method method, String sql, SQLStoreService sqlService, Class<?> valueType) {
+    public MapListResultSetMethod(Method method, String sql, SQLStoreService sqlService, Class<?> valueType) {
         super(method, sql, sqlService, valueType);
     }
 

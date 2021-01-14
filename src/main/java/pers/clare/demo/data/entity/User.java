@@ -13,8 +13,6 @@ import javax.persistence.*;
 @Entity
 public class User {
 
-    public static final SQLStore STORE = SQLStoreFactory.build(User.class, true);
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

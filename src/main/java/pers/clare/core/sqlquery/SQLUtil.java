@@ -145,10 +145,25 @@ public class SQLUtil {
         return sqlQuery.toString();
     }
 
-    public static <T> String setValue(SQLQueryBuilder sqlQueryBuilder, Field[] fields, T entity){
+    public static <T> String setValue(SQLQueryBuilder sqlQueryBuilder, Field[] fields, T entity) {
         try {
             SQLQuery sqlQuery = sqlQueryBuilder.build();
             for (Field f : fields) {
+                sqlQuery.value(f.getName(), f.get(entity));
+            }
+            return sqlQuery.toString();
+        } catch (Exception e) {
+            throw new SQLQueryException(e.getMessage(), e);
+        }
+    }
+
+    public static <T> String setValue2(SQLQueryBuilder sqlQueryBuilder, Field[] fields, Field[] keyFields, T entity) {
+        try {
+            SQLQuery sqlQuery = sqlQueryBuilder.build();
+            for (Field f : fields) {
+                sqlQuery.value(f.getName(), f.get(entity));
+            }
+            for (Field f : keyFields) {
                 sqlQuery.value(f.getName(), f.get(entity));
             }
             return sqlQuery.toString();

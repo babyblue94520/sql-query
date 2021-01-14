@@ -4,6 +4,7 @@ import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import pers.clare.core.sqlquery.ResultSetUtil;
+import pers.clare.core.sqlquery.aop.SqlConnectionReuse;
 import pers.clare.core.sqlquery.exception.SQLQueryException;
 import pers.clare.demo.bo.Test2;
 import pers.clare.demo.data.entity.Test;
@@ -19,6 +20,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -31,6 +33,10 @@ public class PerformanceController {
     private DataSource dataSource;
     @Autowired
     private TestCrudRepository testCrudRepository;
+    @Autowired
+    private TestService testService;
+    @Autowired
+    private TestRepository testRepository;
     @Autowired
     private TestJpaRepository testJapRepository;
 
@@ -48,7 +54,8 @@ public class PerformanceController {
         for (int t = 0; t < thread; t++) {
             tasks.add(() -> {
                 for (int i = 0; i < max; i++) {
-                    testCrudRepository.findById(1);
+//                    testCrudRepository.findById(1);
+                    testService.reuse(i);
                 }
                 return max;
             });
@@ -64,6 +71,8 @@ public class PerformanceController {
         executors.shutdown();
         return sp.toString();
     }
+
+
 
     @GetMapping("2")
     public String test2(

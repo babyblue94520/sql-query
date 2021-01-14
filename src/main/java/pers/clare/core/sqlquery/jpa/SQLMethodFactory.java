@@ -5,7 +5,7 @@ import org.springframework.data.domain.Pageable;
 import pers.clare.core.sqlquery.*;
 import pers.clare.core.sqlquery.annotation.Sql;
 import pers.clare.core.sqlquery.exception.SQLQueryException;
-import pers.clare.core.sqlquery.handler.*;
+import pers.clare.core.sqlquery.method.*;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
@@ -43,33 +43,33 @@ public class SQLMethodFactory {
                     valueType = getReturnActualType(method, 0);
                     if (returnType == Set.class) {
                         if (SQLStoreFactory.isIgnore(valueType)) {
-                            queryMethods.put(method, new SetResultSetHandler(method, command, sqlStoreService, valueType));
+                            queryMethods.put(method, new SetResultSetMethod(method, command, sqlStoreService, valueType));
                         } else {
-                            queryMethods.put(method, new SQLStoreSetResultSetHandler(method, command, sqlStoreService, valueType));
+                            queryMethods.put(method, new SQLStoreSetResultSetMethod(method, command, sqlStoreService, valueType));
                         }
                     } else {
                         if (SQLStoreFactory.isIgnore(valueType)) {
                             if (valueType == Map.class) {
-                                queryMethods.put(method, new MapListResultSetHandler(method, command, sqlStoreService, valueType));
+                                queryMethods.put(method, new MapListResultSetMethod(method, command, sqlStoreService, valueType));
                             } else {
-                                queryMethods.put(method, new ListResultSetHandler(method, command, sqlStoreService, valueType));
+                                queryMethods.put(method, new ListResultSetMethod(method, command, sqlStoreService, valueType));
                             }
                         } else {
-                            queryMethods.put(method, new SQLStoreListResultSetHandler(method, command, sqlStoreService, valueType));
+                            queryMethods.put(method, new SQLStoreListResultSetMethod(method, command, sqlStoreService, valueType));
 
                         }
                     }
                 } else if (returnType == Map.class) {
-                    queryMethods.put(method, new MapResultSetHandler(method, command, sqlStoreService, getReturnActualType(method, 1)));
+                    queryMethods.put(method, new MapResultSetMethod(method, command, sqlStoreService, getReturnActualType(method, 1)));
                 } else {
                     if (SQLStoreFactory.isIgnore(returnType)) {
-                        queryMethods.put(method, new OneResultSetHandler(method, command, sqlStoreService, returnType));
+                        queryMethods.put(method, new OneResultSetMethod(method, command, sqlStoreService, returnType));
                     } else {
-                        queryMethods.put(method, new SQLStoreResultSetHandler(method, command, sqlStoreService, returnType));
+                        queryMethods.put(method, new SQLStoreResultSetMethod(method, command, sqlStoreService, returnType));
                     }
                 }
             } else {
-                queryMethods.put(method, new SQLUpdateHandler(method, command, sqlStoreService));
+                queryMethods.put(method, new SQLUpdateMethod(method, command, sqlStoreService));
             }
         }
         return queryMethods;

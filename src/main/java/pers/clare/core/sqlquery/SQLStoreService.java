@@ -2,6 +2,9 @@ package pers.clare.core.sqlquery;
 
 import lombok.extern.log4j.Log4j2;
 import pers.clare.core.sqlquery.exception.SQLQueryException;
+import pers.clare.core.sqlquery.function.StoreResultSetHandler;
+import pers.clare.core.sqlquery.support.ConnectionReuse;
+import pers.clare.core.sqlquery.support.ConnectionReuseHolder;
 
 import javax.sql.DataSource;
 import java.sql.*;
@@ -20,134 +23,168 @@ public class SQLStoreService extends SQLService {
         super(write, read);
     }
 
+    private <T, R> R queryHandler(
+            Boolean readonly
+            , SQLStore<T> sqlStore
+            , String sql
+            , Object[] parameters
+            , StoreResultSetHandler<T, R> storeResultSetHandler
+    ) {
+        ConnectionReuse connectionReuse = ConnectionReuseHolder.get();
+        if (readonly && !connectionReuse.isReadonly()) {
+            readonly = false;
+        }
+        Connection connection = null;
+        try {
+            connection = connectionReuse.getConnection(getDataSource(readonly));
+            return doQueryHandler(connection, readonly, sqlStore, sql, parameters, storeResultSetHandler);
+        } catch (SQLQueryException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new SQLQueryException(e.getMessage(), e);
+        } finally {
+            close(connectionReuse, connection);
+        }
+    }
+
+    private <T, R> R doQueryHandler(
+            Connection connection
+            , Boolean readonly
+            , SQLStore<T> sqlStore
+            , String sql
+            , Object[] parameters
+            , StoreResultSetHandler<T, R> storeResultSetHandler
+    ) throws Exception {
+        R result = storeResultSetHandler.apply(go(connection, sql, parameters), sqlStore);
+        if (retry(result, readonly)) {
+            return queryHandler(false, sqlStore, sql, parameters, storeResultSetHandler);
+        } else {
+            return result;
+        }
+    }
+
+    private <T, R> R queryHandler(
+            Boolean readonly
+            , SQLStore<T> sqlStore
+            , T entity
+            , StoreResultSetHandler<T, R> storeResultSetHandler
+    ) {
+        ConnectionReuse connectionReuse = ConnectionReuseHolder.get();
+        if (readonly && !connectionReuse.isReadonly()) {
+            readonly = false;
+        }
+        Connection connection = null;
+        try {
+            connection = connectionReuse.getConnection(getDataSource(readonly));
+            return doQueryHandler(connection, readonly, sqlStore, entity, storeResultSetHandler);
+        } catch (SQLQueryException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new SQLQueryException(e.getMessage(), e);
+        } finally {
+            close(connectionReuse, connection);
+        }
+    }
+
+    private <T, R> R doQueryHandler(
+            Connection connection
+            , Boolean readonly
+            , SQLStore<T> sqlStore
+            , T entity
+            , StoreResultSetHandler<T, R> storeResultSetHandler
+    ) throws Exception {
+        ResultSet rs = connection.createStatement().executeQuery(SQLUtil.setValue(sqlStore.selectById, sqlStore.keyFields, entity));
+        R result = storeResultSetHandler.apply(rs, sqlStore);
+        if (retry(result, readonly)) {
+            return queryHandler(false, sqlStore, entity, storeResultSetHandler);
+        } else {
+            return result;
+        }
+    }
+
+    private final StoreResultSetHandler findHandler = this::findHandler;
+
+    private <T> T findHandler(ResultSet rs, SQLStore<T> sqlStore) throws Exception {
+        return SQLUtil.toInstance(sqlStore.constructorMap, rs);
+    }
+
+    private final StoreResultSetHandler findSetHandler = this::findSetHandler;
+
+    private <T> Set<T> findSetHandler(ResultSet rs, SQLStore<T> sqlStore) throws Exception {
+        return SQLUtil.toSetInstance(sqlStore.constructorMap, rs);
+    }
+
+    private final StoreResultSetHandler findAllHandler = this::findAllHandler;
+
+    private <T> List<T> findAllHandler(ResultSet rs, SQLStore<T> sqlStore) throws Exception {
+        return SQLUtil.toInstances(sqlStore.constructorMap, rs);
+    }
+
     public <T> T find(
             SQLStore<T> store
             , T entity
     ) {
-        return find(false, store, entity);
+        return (T) queryHandler(false, store, entity, findHandler);
     }
 
     public <T> T find(
             boolean readonly
-            , SQLStore<T> store
+            , SQLStore<T> sqlStore
             , T entity
     ) {
-        try (
-                Connection conn = getDataSource(readonly).getConnection();
-        ) {
-            ResultSet rs = conn.createStatement().executeQuery(SQLUtil.setValue(store.selectById, store.keyFields, entity));
-            T result = SQLUtil.toInstance(store.constructorMap, rs);
-            if (retry(result, readonly)) {
-                return find(false, store, entity);
-            }
-            return result;
-        } catch (Exception e) {
-            throw new SQLQueryException(e.getMessage(), e);
-        }
+        return (T) queryHandler(readonly, sqlStore, entity, findHandler);
     }
 
     public <T> T find(
-            SQLStore<T> store
+            SQLStore<T> sqlStore
             , String sql
             , Object... parameters
     ) {
-        return find(false, store, sql, parameters);
+        return (T) queryHandler(false, sqlStore, sql, parameters, findHandler);
     }
 
     public <T> T find(
             boolean readonly
-            , SQLStore<T> store
+            , SQLStore<T> sqlStore
             , String sql
             , Object... parameters
     ) {
-        try (
-                Connection conn = getDataSource(readonly).getConnection();
-        ) {
-            ResultSet rs;
-            if (parameters.length == 0) {
-                rs = conn.createStatement().executeQuery(sql);
-            } else {
-                PreparedStatement ps = conn.prepareStatement(sql);
-                PreparedStatementUtil.setValue(ps, parameters);
-                rs = ps.executeQuery();
-            }
-            T result = SQLUtil.toInstance(store.constructorMap, rs);
-            if (retry(result, readonly)) {
-                return find(false, store, sql, parameters);
-            }
-            return result;
-        } catch (Exception e) {
-            throw new SQLQueryException(e.getMessage(), e);
-        }
+        return (T) queryHandler(readonly, sqlStore, sql, parameters, findHandler);
+
     }
 
     public <T> Set<T> findSet(
-            SQLStore<T> store
+            SQLStore<T> sqlStore
             , String sql
             , Object... parameters
     ) {
-        return findSet(false, store, sql, parameters);
+        return (Set<T>) queryHandler(false, sqlStore, sql, parameters, findSetHandler);
     }
 
     public <T> Set<T> findSet(
             boolean readonly
-            , SQLStore<T> store
+            , SQLStore<T> sqlStore
             , String sql
             , Object... parameters
     ) {
-        try (
-                Connection conn = getDataSource(readonly).getConnection();
-        ) {
-            ResultSet rs;
-            if (parameters.length == 0) {
-                rs = conn.createStatement().executeQuery(sql);
-            } else {
-                PreparedStatement ps = conn.prepareStatement(sql);
-                PreparedStatementUtil.setValue(ps, parameters);
-                rs = ps.executeQuery();
-            }
-            Set<T> result = SQLUtil.toSetInstance(store.constructorMap, rs);
-            if (retry(result, readonly)) {
-                return findSet(false, store, sql, parameters);
-            }
-            return result;
-        } catch (Exception e) {
-            throw new SQLQueryException(e.getMessage(), e);
-        }
+        return (Set<T>) queryHandler(readonly, sqlStore, sql, parameters, findSetHandler);
     }
 
     public <T> List<T> findAll(
-            SQLStore<T> store
+            SQLStore<T> sqlStore
             , String sql
             , Object... parameters
     ) {
-        return findAll(false, store, sql, parameters);
+        return (List<T>) queryHandler(false, sqlStore, sql, parameters, findAllHandler);
     }
 
     public <T> List<T> findAll(
             boolean readonly
-            , SQLStore<T> store
+            , SQLStore<T> sqlStore
             , String sql
             , Object... parameters
     ) {
-        try (
-                Connection conn = getDataSource(readonly).getConnection();
-        ) {
-            ResultSet rs;
-            if (parameters.length == 0) {
-                rs = conn.createStatement().executeQuery(sql);
-            } else {
-                PreparedStatement ps = conn.prepareStatement(sql);
-                PreparedStatementUtil.setValue(ps, parameters);
-                rs = ps.executeQuery();
-            }
-            List<T> result = SQLUtil.toInstances(store.constructorMap, rs);
-            if (retry(result, readonly)) {
-                return findAll(false, store, sql, parameters);
-            }
-            return result;
-        } catch (Exception e) {
-            throw new SQLQueryException(e.getMessage(), e);
-        }
+        return (List<T>) queryHandler(readonly, sqlStore, sql, parameters, findAllHandler);
     }
+
 }

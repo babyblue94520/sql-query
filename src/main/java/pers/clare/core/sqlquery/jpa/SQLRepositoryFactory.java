@@ -7,8 +7,6 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanClassLoaderAware;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
-import org.springframework.data.projection.DefaultMethodInvokingMethodInterceptor;
-import org.springframework.data.repository.core.support.*;
 import pers.clare.core.sqlquery.*;
 
 @Log4j2
@@ -44,13 +42,7 @@ public class SQLRepositoryFactory implements BeanClassLoaderAware, BeanFactoryAw
         }
         result.setTarget(target);
         result.addAdvisor(ExposeInvocationInterceptor.ADVISOR);
-        if (MethodInvocationValidator.supports(repositoryInterface)) {
-            result.addAdvice(new MethodInvocationValidator());
-        }
         result.addAdvice(new SQLMethodInterceptor(repositoryInterface, target, SQLMethodFactory.create(repositoryInterface, sqlStoreService)));
-        if (DefaultMethodInvokingMethodInterceptor.hasDefaultMethods(repositoryInterface)) {
-            result.addAdvice(new DefaultMethodInvokingMethodInterceptor());
-        }
         T repository = (T) result.getProxy(classLoader);
 
         if (log.isDebugEnabled()) {

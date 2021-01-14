@@ -37,6 +37,11 @@ public class TestController {
     @Autowired
     private DataSource dataSource;
 
+    @GetMapping("define")
+    public Object define(Integer id) {
+        return testRepository.define(id)+":"+testRepository.id();
+    }
+
     @PostMapping("id")
     public Object find(Long id) {
         return testRepository.bbb(id);

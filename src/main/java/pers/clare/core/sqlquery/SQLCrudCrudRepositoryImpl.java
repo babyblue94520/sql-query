@@ -125,7 +125,7 @@ public class SQLCrudCrudRepositoryImpl<T> implements SQLCrudRepository<T> {
     public int update(
             T entity
     ) {
-        return sqlStoreService.update(SQLUtil.setValue(sqlStore.update, sqlStore.updateFields, entity));
+        return sqlStoreService.update(SQLUtil.setValue2(sqlStore.update, sqlStore.updateFields, sqlStore.keyFields, entity));
     }
 
     public int delete(

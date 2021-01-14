@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
 import pers.clare.demo.data.entity.Test;
+import pers.clare.demo.data.sql.TestCrudRepository;
 import pers.clare.demo.service.TestService;
 
 
@@ -13,10 +14,12 @@ import pers.clare.demo.service.TestService;
 @Configuration
 public class TestConfig implements CommandLineRunner {
     @Autowired
-    private TestService testService;
+    private TestCrudRepository testCrudRepository;
 
     @Override
     public void run(String... args) {
-        testService.insert(new Test(null,"test"));
+        if(testCrudRepository.count()==0){
+            testCrudRepository.insert(new Test(null,"test"));
+        }
     }
 }

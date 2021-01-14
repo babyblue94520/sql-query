@@ -1,12 +1,12 @@
-package pers.clare.core.sqlquery.handler;
+package pers.clare.core.sqlquery.method;
 
 import pers.clare.core.sqlquery.*;
 
 import java.lang.reflect.Method;
 
-public class SQLUpdateHandler extends SQLHandler {
+public class SQLUpdateMethod extends SQLMethod {
 
-    public SQLUpdateHandler(Method method, String sql, SQLStoreService sqlStoreService) {
+    public SQLUpdateMethod(Method method, String sql, SQLStoreService sqlStoreService) {
         super(method, sql, sqlStoreService);
     }
 

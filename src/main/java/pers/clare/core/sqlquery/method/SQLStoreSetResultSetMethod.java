@@ -1,12 +1,12 @@
-package pers.clare.core.sqlquery.handler;
+package pers.clare.core.sqlquery.method;
 
 import pers.clare.core.sqlquery.SQLStoreService;
 
 import java.lang.reflect.Method;
 
-public class SQLStoreSetResultSetHandler extends SQLStoreHandler {
+public class SQLStoreSetResultSetMethod extends SQLStoreMethod {
 
-    public SQLStoreSetResultSetHandler(Method method, String sql, SQLStoreService sqlService, Class<?> valueType) {
+    public SQLStoreSetResultSetMethod(Method method, String sql, SQLStoreService sqlService, Class<?> valueType) {
         super(method, sql, sqlService, valueType);
     }
 
