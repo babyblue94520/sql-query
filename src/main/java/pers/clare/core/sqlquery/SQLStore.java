@@ -21,6 +21,7 @@ public class SQLStore<T> {
     SQLQueryBuilder countById;
     String select;
     SQLQueryBuilder selectById;
+    SQLQueryBuilder insertAutoKey;
     SQLQueryBuilder insert;
     SQLQueryBuilder update;
     String deleteAll;
@@ -41,6 +42,7 @@ public class SQLStore<T> {
             , SQLQueryBuilder countById
             , String select
             , SQLQueryBuilder selectById
+            , SQLQueryBuilder insertAutoKey
             , SQLQueryBuilder insert
             , SQLQueryBuilder update
             , String deleteAll
@@ -56,6 +58,7 @@ public class SQLStore<T> {
         this.countById = countById;
         this.select = select;
         this.selectById = selectById;
+        this.insertAutoKey = insertAutoKey;
         this.insert = insert;
         this.update = update;
         this.deleteAll = deleteAll;

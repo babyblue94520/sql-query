@@ -1,6 +1,6 @@
 package pers.clare.core.sqlquery;
 
-import pers.clare.core.util.Asserts;
+import pers.clare.util.Asserts;
 import pers.clare.demo.data.entity.User;
 
 import javax.persistence.Column;
@@ -8,10 +8,6 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Transient;
 import java.lang.reflect.*;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
 import java.util.*;
 
 public interface SQLStoreFactory {
@@ -52,8 +48,10 @@ public interface SQLStoreFactory {
             String tableName = SQLUtil.convert(clazz.getSimpleName());
             StringBuilder selectColumns = new StringBuilder();
             StringBuilder insertColumns = new StringBuilder();
+            StringBuilder insertAutoKeyColumns = new StringBuilder();
             StringBuilder whereId = new StringBuilder(" where ");
             StringBuilder values = new StringBuilder("values(");
+            StringBuilder autoKeyValues = new StringBuilder("values(");
             StringBuilder updateSet = new StringBuilder();
             Field[] fields = clazz.getDeclaredFields();
             int length = fields.length;
@@ -84,18 +82,23 @@ public interface SQLStoreFactory {
                     if (column == null) {
                         insertMethods[insertCount++] = field;
                         insertColumns.append(columnName).append(',');
+                        insertAutoKeyColumns.append(columnName).append(',');
                         appendValue(values, fieldName);
+                        appendValue(autoKeyValues, fieldName);
+
                         updateMethods[updateCount++] = field;
-                        appendSet(updateSet,columnName, fieldName);
+                        appendSet(updateSet, columnName, fieldName);
                     } else {
                         if (column.insertable()) {
                             insertMethods[insertCount++] = field;
                             insertColumns.append(columnName).append(',');
+                            insertAutoKeyColumns.append(columnName).append(',');
                             appendValue(values, fieldName);
+                            appendValue(autoKeyValues, fieldName);
                         }
                         if (column.updatable()) {
                             updateMethods[updateCount++] = field;
-                            appendSet(updateSet,columnName, fieldName);
+                            appendSet(updateSet, columnName, fieldName);
                         }
                     }
                 } else {
@@ -107,6 +110,8 @@ public interface SQLStoreFactory {
                         autoKey = field;
                         autoKey.setAccessible(true);
                     }
+                    appendValue(autoKeyValues, fieldName);
+                    insertAutoKeyColumns.append(columnName).append(',');
                     keyMethods[keyCount++] = field;
                     whereId.append(columnName)
                             .append('=')
@@ -129,11 +134,13 @@ public interface SQLStoreFactory {
 
             selectColumns.delete(selectColumns.length() - 1, selectColumns.length());
             insertColumns.delete(insertColumns.length() - 1, insertColumns.length());
+            insertAutoKeyColumns.delete(insertAutoKeyColumns.length() - 1, insertAutoKeyColumns.length());
             values.replace(values.length() - 1, values.length(), ")");
+            autoKeyValues.replace(autoKeyValues.length() - 1, autoKeyValues.length(), ")");
             updateSet.delete(updateSet.length() - 1, updateSet.length());
             whereId.delete(whereId.length() - 5, whereId.length());
 
-            int tl = tableName.length(), scl = selectColumns.length(), icl = insertColumns.length(), vl = values.length(), ul = updateSet.length(), wl = whereId.length();
+            int tl = tableName.length(), scl = selectColumns.length(), icl = insertColumns.length(), vl = values.length(), aicl = insertAutoKeyColumns.length(), avl = autoKeyValues.length(), ul = updateSet.length(), wl = whereId.length();
             char[] chars;
             int index;
 
@@ -194,6 +201,20 @@ public interface SQLStoreFactory {
             values.getChars(0, vl, chars, index);
             SQLQueryBuilder insert = new SQLQueryBuilder(chars);
 
+            // insert auto key
+            chars = new char[14 + tl + aicl + avl];
+            index = 0;
+            "insert into ".getChars(0, 12, chars, index);
+            index += 12;
+            tableName.getChars(0, tl, chars, index);
+            index += tl;
+            chars[index++] = '(';
+            insertAutoKeyColumns.getChars(0, aicl, chars, index);
+            index += aicl;
+            chars[index++] = ')';
+            autoKeyValues.getChars(0, avl, chars, index);
+            SQLQueryBuilder insertAutoKey = new SQLQueryBuilder(chars);
+
             // update
             chars = new char[12 + tl + ul + wl];
             index = 0;
@@ -226,7 +247,7 @@ public interface SQLStoreFactory {
             whereId.getChars(0, wl, chars, index);
             SQLQueryBuilder deleteById = new SQLQueryBuilder(chars);
 
-            store = new SQLStore(constructorMap, crud, autoKey, keyMethods, insertMethods, updateMethods, count, countById, select, selectById, insert, update, deleteAll, deleteById);
+            store = new SQLStore(constructorMap, crud, autoKey, keyMethods, insertMethods, updateMethods, count, countById, select, selectById, insertAutoKey, insert, update, deleteAll, deleteById);
         } else {
             store = new SQLStore(constructorMap);
         }

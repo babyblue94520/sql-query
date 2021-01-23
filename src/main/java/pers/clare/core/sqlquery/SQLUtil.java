@@ -1,15 +1,11 @@
 package pers.clare.core.sqlquery;
 
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.domain.Sort.Order;
 import pers.clare.core.sqlquery.exception.SQLQueryException;
+import pers.clare.core.sqlquery.page.Pagination;
 
 import java.lang.reflect.*;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
 import java.util.*;
 
 
@@ -21,51 +17,30 @@ public class SQLUtil {
     }
 
     public static String buildTotalSQL(String sql) {
-        return new StringBuilder("select count(*) from(").append(sql)
-                .append(")t")
-                .toString();
+        return "select count(*) from(" +sql +")t";
     }
 
     public static String buildPaginationSQL(
-            Pageable pageable
+            Pagination pagination
             , String sql
     ) {
         StringBuilder sb = new StringBuilder(sql);
-        return toOrder(sb, pageable.getSort())
-                .append(" limit ?,?")
-                .toString();
-    }
-
-    /**
-     * 取得排序字串.
-     *
-     * @param sort the sort
-     * @return the order
-     */
-    public static String toOrder(Sort sort) {
-        if (sort == null) return "";
-        return toOrder(new StringBuilder(), sort).toString();
-    }
-
-    public static StringBuilder toOrder(StringBuilder sb, Sort sort) {
-        if (sort == null) return sb;
-        Order order;
-        Iterator<Order> iterator = sort.iterator();
-        while (iterator.hasNext()) {
-            order = iterator.next();
-            turnCamelCase(sb, order.getProperty())
-                    .append(' ')
-                    .append(order.getDirection())
-                    .append(',');
+        String[] sorts = pagination.getSorts();
+        if (sorts != null) {
+            sb.append(" order by ");
+            for (String sort : sorts) {
+                sb.append(sort)
+                        .append(',');
+            }
+            sb.delete(sb.length() - 1, sb.length());
         }
-        if (sb.length() > 0) {
-            sb.delete(sb.length() - 1, sb.length())
-                    .append(" order by ");
-        }
-        return sb;
+        sb.append(" limit ")
+                .append(pagination.getSize() * pagination.getPage())
+                .append(pagination.getSize());
+        return sb.toString();
     }
 
-    private static StringBuilder turnCamelCase(
+    public static StringBuilder turnCamelCase(
             StringBuilder sb
             , String str
     ) {
@@ -74,8 +49,8 @@ public class SQLUtil {
         char[] nb = new char[l * 2];
         char b;
         if (camelCase) {
-            for (int i = 0; i < l; i++) {
-                b = bs[i];
+            for (char value : bs) {
+                b = value;
                 // 移除 ';' 結束字元
                 if (b == 59) continue;
                 // 紀錄最後的 '.'
@@ -91,8 +66,8 @@ public class SQLUtil {
                 nb[++c] = b;
             }
         } else {
-            for (int i = 0; i < l; i++) {
-                b = bs[i];
+            for (char value : bs) {
+                b = value;
                 // 移除 ';' 結束字元
                 if (b == 59) continue;
                 // 紀錄最後的 '.'
