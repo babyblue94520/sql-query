@@ -1,10 +1,8 @@
 package pers.clare.demo.data;
 
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
-import org.springframework.context.annotation.Profile;
 import pers.clare.core.sqlquery.SQLStoreService;
 import pers.clare.core.sqlquery.annotation.SQLScan;
 

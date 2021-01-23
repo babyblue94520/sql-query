@@ -1,7 +1,6 @@
 package pers.clare.demo.data;
 
 
-import org.springframework.context.annotation.Profile;
 import pers.clare.core.data.repository.ExtendedRepositoryImpl;
 import com.zaxxer.hikari.HikariDataSource;
 import org.springframework.beans.factory.FactoryBean;
@@ -19,7 +18,6 @@ import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.transaction.PlatformTransactionManager;
 
-import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
 

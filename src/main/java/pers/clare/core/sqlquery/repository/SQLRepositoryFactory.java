@@ -1,4 +1,4 @@
-package pers.clare.core.sqlquery.jpa;
+package pers.clare.core.sqlquery.repository;
 
 import lombok.extern.log4j.Log4j2;
 import org.springframework.aop.framework.ProxyFactory;
@@ -7,7 +7,8 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanClassLoaderAware;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
-import pers.clare.core.sqlquery.*;
+import pers.clare.core.sqlquery.SQLCrudRepositoryImpl;
+import pers.clare.core.sqlquery.SQLStoreService;
 
 @Log4j2
 public class SQLRepositoryFactory implements BeanClassLoaderAware, BeanFactoryAware {
@@ -34,10 +35,11 @@ public class SQLRepositoryFactory implements BeanClassLoaderAware, BeanFactoryAw
         ProxyFactory result = new ProxyFactory();
         Object target;
         if (SQLCrudRepository.class.isAssignableFrom(repositoryInterface)) {
-            target = new SQLCrudCrudRepositoryImpl(repositoryInterface, sqlStoreService);
+            target = new SQLCrudRepositoryImpl(repositoryInterface, sqlStoreService);
             result.setInterfaces(repositoryInterface, SQLCrudRepository.class);
         } else {
-            target = new Object();
+            target = new SQLRepository() {
+            };
             result.setInterfaces(repositoryInterface, SQLRepository.class);
         }
         result.setTarget(target);

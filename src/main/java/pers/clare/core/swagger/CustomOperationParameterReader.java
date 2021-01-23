@@ -1,4 +1,4 @@
-package pers.clare.core.swagger;
+package pers.clare.swagger;
 
 import com.fasterxml.classmate.ResolvedType;
 import com.google.common.base.Predicate;

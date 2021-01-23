@@ -1,4 +1,4 @@
-package pers.clare.core.swagger;
+package pers.clare.swagger;
 
 import com.fasterxml.classmate.TypeResolver;
 import io.swagger.annotations.ApiModel;

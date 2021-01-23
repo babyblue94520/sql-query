@@ -1,4 +1,4 @@
-package pers.clare.core.sqlquery.jpa;
+package pers.clare.core.sqlquery.repository;
 
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;

@@ -1,8 +1,6 @@
-package pers.clare;
+package pers.clare.demo.data.entity;
 
 import lombok.*;
-import pers.clare.core.sqlquery.SQLStore;
-import pers.clare.core.sqlquery.SQLStoreFactory;
 
 
 import javax.persistence.*;
@@ -12,9 +10,7 @@ import javax.persistence.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AccessLog {
-    //解析器
-    public static final SQLStore<AccessLog> ClassParser = SQLStoreFactory.build(AccessLog.class, true);
-    @Id
+   @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @Id

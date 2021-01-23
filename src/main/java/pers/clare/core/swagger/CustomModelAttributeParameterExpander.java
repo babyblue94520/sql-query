@@ -1,4 +1,4 @@
-package pers.clare.core.swagger;
+package pers.clare.swagger;
 
 import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.members.ResolvedField;
@@ -12,7 +12,6 @@ import com.google.common.collect.Sets;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -41,24 +40,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static com.google.common.base.Objects.*;
 import static com.google.common.base.Objects.equal;
-import static com.google.common.base.Predicates.*;
 import static com.google.common.base.Predicates.and;
 import static com.google.common.base.Predicates.not;
 import static com.google.common.base.Predicates.or;
-import static com.google.common.base.Strings.*;
 import static com.google.common.base.Strings.isNullOrEmpty;
-import static com.google.common.collect.FluentIterable.*;
 import static com.google.common.collect.FluentIterable.from;
-import static com.google.common.collect.Lists.*;
 import static com.google.common.collect.Lists.newArrayList;
-import static com.google.common.collect.Sets.*;
 import static com.google.common.collect.Sets.newHashSet;
-import static springfox.documentation.schema.Collections.*;
 import static springfox.documentation.schema.Collections.collectionElementType;
 import static springfox.documentation.schema.Collections.isContainerType;
-import static springfox.documentation.schema.Types.*;
 import static springfox.documentation.schema.Types.isVoid;
 import static springfox.documentation.schema.Types.typeNameFor;
 

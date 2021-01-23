@@ -1,4 +1,4 @@
-package pers.clare.core.sqlquery.jpa;
+package pers.clare.core.sqlquery.repository;
 
 import lombok.extern.log4j.Log4j2;
 import org.aopalliance.intercept.MethodInterceptor;
@@ -32,7 +32,7 @@ public class SQLMethodInterceptor implements MethodInterceptor {
                     this.methods.put(method, targetMethod);
                 }
             } catch (NoSuchMethodException e) {
-                log.error(e.getMessage());
+
             }
         }
     }

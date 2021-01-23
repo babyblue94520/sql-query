@@ -1,8 +1,8 @@
 package pers.clare.core.sqlquery.annotation;
 
 import org.springframework.context.annotation.Import;
-import pers.clare.core.sqlquery.jpa.SQLScanRegistrar;
-import pers.clare.core.sqlquery.jpa.SQLRepositoryFactoryBean;
+import pers.clare.core.sqlquery.repository.SQLScanRegistrar;
+import pers.clare.core.sqlquery.repository.SQLRepositoryFactoryBean;
 
 import java.lang.annotation.*;
 
@@ -17,6 +17,4 @@ public @interface SQLScan {
     Class<?>[] basePackageClasses() default {};
     String sqlStoreServiceRef() default "sqlStoreService";
     Class<? extends SQLRepositoryFactoryBean> factoryBean() default SQLRepositoryFactoryBean.class;
-    Class<? extends Annotation> annotationClass() default Annotation.class;
-    Class<?> markerInterface() default Class.class;
 }

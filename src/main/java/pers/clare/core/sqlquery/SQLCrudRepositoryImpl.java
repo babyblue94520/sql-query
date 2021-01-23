@@ -1,17 +1,21 @@
 package pers.clare.core.sqlquery;
 
 import pers.clare.core.sqlquery.exception.SQLQueryException;
-import pers.clare.core.sqlquery.jpa.SQLCrudRepository;
+import pers.clare.core.sqlquery.page.Next;
+import pers.clare.core.sqlquery.page.Page;
+import pers.clare.core.sqlquery.page.Pagination;
+import pers.clare.core.sqlquery.repository.SQLCrudRepository;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.List;
 
-public class SQLCrudCrudRepositoryImpl<T> implements SQLCrudRepository<T> {
+public class SQLCrudRepositoryImpl<T> implements SQLCrudRepository<T> {
     private final SQLStore<T> sqlStore;
     private SQLStoreService sqlStoreService;
 
-    public SQLCrudCrudRepositoryImpl(Class<T> repositoryClass, SQLStoreService sqlStoreService) {
+    public SQLCrudRepositoryImpl(Class<T> repositoryClass, SQLStoreService sqlStoreService) {
         this.sqlStoreService = sqlStoreService;
         Type[] interfaces = repositoryClass.getGenericInterfaces();
         if (interfaces == null || interfaces.length == 0) {
@@ -73,6 +77,16 @@ public class SQLCrudCrudRepositoryImpl<T> implements SQLCrudRepository<T> {
         return findAll(false);
     }
 
+    @Override
+    public Page<T> page(Pagination pagination) {
+        return sqlStoreService.page(sqlStore, sqlStore.select, pagination);
+    }
+
+    @Override
+    public Next<T> next(Pagination pagination) {
+        return null;
+    }
+
     public List<T> findAll(
             Boolean readonly
     ) {
@@ -107,10 +121,21 @@ public class SQLCrudCrudRepositoryImpl<T> implements SQLCrudRepository<T> {
             T entity
     ) {
         try {
-            String sql = SQLUtil.setValue(sqlStore.insert, sqlStore.insertFields, entity);
             if (sqlStore.autoKey == null) {
-                sqlStoreService.update(sql);
+                sqlStoreService.update(SQLUtil.setValue(sqlStore.insert, sqlStore.insertFields, entity));
             } else {
+                Object keyValue = sqlStore.autoKey.get(entity);
+                String sql;
+                if (keyValue == null) {
+                    sql = SQLUtil.setValue(sqlStore.insert, sqlStore.insertFields, entity);
+                } else {
+                    SQLQuery sqlQuery = sqlStore.insertAutoKey.build();
+                    sqlQuery.value(sqlStore.autoKey.getName(), keyValue);
+                    for (Field f : sqlStore.insertFields) {
+                        sqlQuery.value(f.getName(), f.get(entity));
+                    }
+                    sql = sqlQuery.toString();
+                }
                 Object key = sqlStoreService.insert(sql, sqlStore.autoKey.getType());
                 if (key != null) {
                     sqlStore.autoKey.set(entity, key);

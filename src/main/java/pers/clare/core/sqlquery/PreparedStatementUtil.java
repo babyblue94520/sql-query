@@ -1,6 +1,6 @@
 package pers.clare.core.sqlquery;
 
-import org.springframework.data.domain.Pageable;
+import pers.clare.core.sqlquery.page.Pagination;
 
 import java.sql.*;
 
@@ -84,13 +84,13 @@ public class PreparedStatementUtil {
     public static PreparedStatement create(
             Connection conn
             , String sql
-            , Pageable pageable
+            , Pagination pagination
             , Object... parameters
     ) throws SQLException {
-        PreparedStatement ps = conn.prepareStatement(SQLUtil.buildPaginationSQL(pageable, sql));
+        PreparedStatement ps = conn.prepareStatement(SQLUtil.buildPaginationSQL(pagination, sql));
         int lastIndex = setValue(ps, parameters);
-        ps.setInt(lastIndex++, pageable.getPageNumber() * pageable.getPageSize());
-        ps.setInt(lastIndex, pageable.getPageSize());
+        ps.setInt(lastIndex++, pagination.getPage() * pagination.getSize());
+        ps.setInt(lastIndex, pagination.getSize());
         return ps;
     }
 

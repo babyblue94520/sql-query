@@ -1,11 +1,10 @@
 package pers.clare.core.sqlquery;
 
 import lombok.extern.log4j.Log4j2;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
 import pers.clare.core.sqlquery.exception.SQLQueryException;
 import pers.clare.core.sqlquery.function.ResultSetHandler;
+import pers.clare.core.sqlquery.page.Page;
+import pers.clare.core.sqlquery.page.Pagination;
 import pers.clare.core.sqlquery.support.ConnectionReuse;
 import pers.clare.core.sqlquery.support.ConnectionReuseHolder;
 
@@ -21,7 +20,6 @@ public class SQLService {
     protected DataSource read;
 
     protected boolean hasRead;
-
 
     public SQLService(DataSource write) {
         this.write = write;
@@ -66,7 +64,7 @@ public class SQLService {
         }
     }
 
-    private <T, R> R queryHandler(
+    protected <T, R> R queryHandler(
             Boolean readonly
             , String sql
             , Class<T> valueType
@@ -100,7 +98,7 @@ public class SQLService {
     ) throws Exception {
         R result = resultSetHandler.apply(go(connection, sql, parameters), valueType);
         if (retry(result, readonly)) {
-            return queryHandler(false, sql, valueType, parameters, resultSetHandler);
+            return doQueryHandler(connection, false, sql, valueType, parameters, resultSetHandler);
         } else {
             return result;
         }
@@ -133,6 +131,12 @@ public class SQLService {
     private final ResultSetHandler findAllHandler = this::findAllHandler;
 
     private <T> List<T> findAllHandler(ResultSet rs, Class<T> valueType) throws Exception {
+        return ResultSetUtil.toList(valueType, rs);
+    }
+
+    private final ResultSetHandler pageHandler = this::pageHandler;
+
+    private <T> List<T> pageHandler(ResultSet rs, Class<T> valueType) throws Exception {
         return ResultSetUtil.toList(valueType, rs);
     }
 
@@ -221,39 +225,6 @@ public class SQLService {
         return (List<T>) queryHandler(readonly, sql, valueType, parameters, findAllHandler);
     }
 
-    public <T> Page<Map<String, T>> findAllMap(
-            Class<T> clazz
-            , String sql
-            , Pageable pageable
-            , Object... parameters
-    ) {
-        return findAllMap(false, clazz, sql, pageable, parameters);
-    }
-
-    public <T> Page<Map<String, T>> findAllMap(
-            boolean readonly
-            , Class<T> clazz
-            , String sql
-            , Pageable pageable
-            , Object... parameters
-    ) {
-        try (
-                Connection conn = getDataSource(readonly).getConnection()
-        ) {
-            List<Map<String, T>> list = ResultSetUtil.toMapList(clazz, PreparedStatementUtil.query(conn, sql, pageable, parameters));
-            if (list.size() <= pageable.getPageSize()) {
-                return new PageImpl<>(list, pageable, list.size());
-            }
-            ResultSet rs = PreparedStatementUtil.query(conn, SQLUtil.buildTotalSQL(sql), parameters);
-            if (rs.next()) {
-                return new PageImpl<>(list, pageable, rs.getLong(1));
-            }
-            throw new SQLQueryException("query total error");
-        } catch (Exception e) {
-            throw new SQLQueryException(e.getMessage(), e);
-        }
-    }
-
     public <T> T insert(
             String sql
             , Class<T> keyType
@@ -296,6 +267,49 @@ public class SQLService {
                 return ps.executeUpdate();
             }
         } catch (SQLException e) {
+            throw new SQLQueryException(e.getMessage(), e);
+        } finally {
+            close(connectionReuse, connection);
+        }
+    }
+
+    public <T> Page<Map<String, T>> page(
+            Class<T> clazz
+            , String sql
+            , Pagination pagination
+            , Object... parameters
+    ) {
+        return page(false, clazz, sql, pagination, parameters);
+    }
+
+    public <T> Page<Map<String, T>> page(
+            boolean readonly
+            , Class<T> clazz
+            , String sql
+            , Pagination pagination
+            , Object... parameters
+    ) {
+        ConnectionReuse connectionReuse = ConnectionReuseHolder.get();
+        if (readonly && !connectionReuse.isReadonly()) {
+            readonly = false;
+        }
+        Connection connection = null;
+        try {
+            connection = connectionReuse.getConnection(getDataSource(readonly));
+            List<Map<String, T>> list = ResultSetUtil.toMapList(clazz, go(connection, SQLUtil.buildPaginationSQL(pagination, sql), parameters));
+            long total = list.size();
+            if (total == pagination.getSize()) {
+                ResultSet rs = go(connection, SQLUtil.buildTotalSQL(sql), parameters);
+                if (rs.next()) {
+                    total = rs.getLong(1);
+                } else {
+                    throw new SQLQueryException("query total error");
+                }
+            }
+            return Page.of(pagination.getPage(), pagination.getSize(), list, total);
+        } catch (SQLQueryException e) {
+            throw e;
+        } catch (Exception e) {
             throw new SQLQueryException(e.getMessage(), e);
         } finally {
             close(connectionReuse, connection);

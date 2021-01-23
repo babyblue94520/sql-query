@@ -3,12 +3,10 @@ package pers.clare.demo.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import pers.clare.core.sqlquery.aop.SqlConnectionReuse;
-import pers.clare.demo.data.entity.Test;
+import pers.clare.demo.data.entity.TestUser;
 import pers.clare.demo.data.repository.TestJpaRepository;
 import pers.clare.demo.data.sql.TestCrudRepository;
 import pers.clare.demo.data.sql.TestRepository;
-
-import java.util.Objects;
 
 @Service
 public class TestService {
@@ -33,40 +31,45 @@ public class TestService {
     }
 
     @SqlConnectionReuse(transaction = true)
-    public Object transaction(Test test){
+    public Object transaction(TestUser testUser){
         System.out.println(testCrudRepository.count());
-        testCrudRepository.insert(test);
+        testCrudRepository.insert(testUser);
         System.out.println(testCrudRepository.count());
-        System.out.println(testCrudRepository.find(1L));
-        testCrudRepository.update(new Test(1L,"testaaa"));
-        System.out.println(testCrudRepository.find(1L));
+        System.out.println(testCrudRepository.findById(1L));
+        testCrudRepository.update(new TestUser(1L,"testaaa"));
+        System.out.println(testCrudRepository.findById(1L));
         throw new IllegalArgumentException("test");
     }
 
-    public Test insert(
-            Test test
+    public TestUser insert(
+            TestUser testUser
     ) {
-        testJpaRepository.insert(test);
-        return testCrudRepository.find(true, test);
+        testCrudRepository.insert(testUser);
+        return testCrudRepository.find(testUser);
     }
 
-    public Test update(
-            Test test
+    public TestUser update(
+            TestUser testUser
     ) {
-        testCrudRepository.update(test);
-        return testCrudRepository.find(true, test);
+        testCrudRepository.update(testUser);
+        return testCrudRepository.find(testUser);
     }
 
     public int delete(
-            Test test
+            TestUser testUser
     ) {
-        return testCrudRepository.delete(test);
+        return testCrudRepository.delete(testUser);
     }
 
-    public Test insert2(
-            Test test
+    public int deleteAll() {
+        return testCrudRepository.deleteAll();
+    }
+
+
+    public TestUser insert2(
+            TestUser testUser
     ) {
-        Test test2 = testCrudRepository.insert(test);
-        return test2;
+        TestUser testUser2 = testCrudRepository.insert(testUser);
+        return testUser2;
     }
 }

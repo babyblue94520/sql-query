@@ -1,4 +1,4 @@
-package pers.clare.core.sqlquery.jpa;
+package pers.clare.core.sqlquery.repository;
 
 import lombok.Getter;
 import lombok.Setter;

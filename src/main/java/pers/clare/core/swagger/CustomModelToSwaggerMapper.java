@@ -1,4 +1,4 @@
-package pers.clare.core.swagger;
+package pers.clare.swagger;
 
 import io.swagger.models.parameters.Parameter;
 import org.springframework.context.annotation.Primary;

@@ -15,8 +15,6 @@ spring:
         implicit_naming_strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
         physical_naming_strategy: pers.clare.core.data.MyPhysicalNamingStrategy
     database: mysql
-    hibernate:
-      ddl-auto: create
 
 management:
   endpoints:

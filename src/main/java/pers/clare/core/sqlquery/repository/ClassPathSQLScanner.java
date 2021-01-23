@@ -1,4 +1,4 @@
-package pers.clare.core.sqlquery.jpa;
+package pers.clare.core.sqlquery.repository;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -52,9 +52,17 @@ public class ClassPathSQLScanner extends ClassPathBeanDefinitionScanner {
 
     @Override
     protected boolean isCandidateComponent(AnnotatedBeanDefinition beanDefinition) {
+        if(beanDefinition.getMetadata().getInterfaceNames()==null||beanDefinition.getMetadata().getInterfaceNames().length==0){
+            return false;
+        }
+        for(String interfaceName : beanDefinition.getMetadata().getInterfaceNames()){
+            if(!(SQLRepository.class.getName().equals(interfaceName)
+                    ||SQLCrudRepository.class.getName().equals(interfaceName))){
+                return false;
+            }
+        }
         boolean isNonRepositoryInterface = !ClassUtils.isGenericRepositoryInterface(beanDefinition.getBeanClassName());
         boolean isTopLevelType = !beanDefinition.getMetadata().hasEnclosingClass();
-
         return isNonRepositoryInterface && isTopLevelType;
     }
 

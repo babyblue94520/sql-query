@@ -7,11 +7,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
-import pers.clare.core.sqlquery.*;
+import pers.clare.core.sqlquery.SQLInjector;
+import pers.clare.core.sqlquery.SQLQuery;
+import pers.clare.core.sqlquery.SQLQueryReplaceBuilder;
 import pers.clare.core.sqlquery.annotation.Sql;
 import pers.clare.demo.data.entity.User;
 import pers.clare.demo.data.repository.UserRepository;
-import pers.clare.demo.data.sql.UserCrudRepository;
 
 
 /**

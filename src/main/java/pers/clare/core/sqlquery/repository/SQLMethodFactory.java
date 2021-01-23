@@ -1,8 +1,10 @@
-package pers.clare.core.sqlquery.jpa;
+package pers.clare.core.sqlquery.repository;
 
 import org.aopalliance.intercept.MethodInterceptor;
 import org.springframework.data.domain.Pageable;
-import pers.clare.core.sqlquery.*;
+import pers.clare.core.sqlquery.SQLInjector;
+import pers.clare.core.sqlquery.SQLStoreFactory;
+import pers.clare.core.sqlquery.SQLStoreService;
 import pers.clare.core.sqlquery.annotation.Sql;
 import pers.clare.core.sqlquery.exception.SQLQueryException;
 import pers.clare.core.sqlquery.method.*;

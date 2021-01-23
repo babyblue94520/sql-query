@@ -17,7 +17,7 @@
     <properties>
         <java.version>11</java.version>
         <swagger.version>2.9.2</swagger.version>
-        <maven.test.skip>false</maven.test.skip>
+        <maven.testUser.skip>false</maven.testUser.skip>
     </properties>
 
     <dependencies>
@@ -73,6 +73,11 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>testUser</scope>
         </dependency>
     </dependencies>
 

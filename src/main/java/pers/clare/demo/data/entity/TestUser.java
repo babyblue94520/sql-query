@@ -1,8 +1,6 @@
 package pers.clare.demo.data.entity;
 
 import lombok.*;
-import pers.clare.core.sqlquery.SQLStore;
-import pers.clare.core.sqlquery.SQLStoreFactory;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -15,7 +13,7 @@ import javax.persistence.Id;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-public class Test {
+public class TestUser {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

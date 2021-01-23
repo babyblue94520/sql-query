@@ -3,21 +3,17 @@ package pers.clare.demo.controller;
 import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import pers.clare.core.sqlquery.PreparedStatementUtil;
-import pers.clare.core.sqlquery.ResultSetUtil;
-import pers.clare.core.sqlquery.exception.SQLQueryException;
+import pers.clare.core.sqlquery.page.Page;
+import pers.clare.core.sqlquery.page.Pagination;
 import pers.clare.demo.bo.Test2;
-import pers.clare.demo.data.entity.Test;
+import pers.clare.demo.data.entity.TestUser;
 import pers.clare.demo.data.sql.TestCrudRepository;
 import pers.clare.demo.data.sql.TestRepository;
 import pers.clare.demo.service.TestService;
 
 import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -37,6 +33,11 @@ public class TestController {
     @Autowired
     private DataSource dataSource;
 
+    @GetMapping("page")
+    public Page<TestUser> page(Pagination pagination) {
+        return testCrudRepository.page(pagination);
+    }
+
     @GetMapping("define")
     public Object define(Integer id) {
         return testRepository.define(id)+":"+testRepository.id();
@@ -53,23 +54,23 @@ public class TestController {
     }
 
     @PostMapping(value = "1")
-    public Test add(@RequestBody Test test) {
-        return testService.insert(test);
+    public TestUser add(@RequestBody TestUser testUser) {
+        return testService.insert(testUser);
     }
 
     @PutMapping("1")
-    public Test modify(Test test) {
-        return testService.update(test);
+    public TestUser modify(TestUser testUser) {
+        return testService.update(testUser);
     }
 
     @DeleteMapping("1")
-    public int remove(Test test) {
-        return testService.delete(test);
+    public int remove(TestUser testUser) {
+        return testService.delete(testUser);
     }
 
     @PostMapping("2")
-    public Test add2() {
-        return testService.insert2(new Test(null, "test" + 1));
+    public TestUser add2() {
+        return testService.insert2(new TestUser(null, "test" + 1));
     }
 
     @GetMapping("1")
@@ -86,7 +87,7 @@ public class TestController {
         for (int t = 0; t < thread; t++) {
             tasks.add(() -> {
                 for (int i = 0; i < max; i++) {
-                    testService.insert(new Test(null, "test" + i));
+                    testService.insert(new TestUser(null, "test" + i));
                 }
                 return max;
             });
@@ -117,7 +118,7 @@ public class TestController {
         for (int t = 0; t < thread; t++) {
             tasks.add(() -> {
                 for (int i = 0; i < max; i++) {
-                    testService.insert2(new Test(null, "test" + i));
+                    testService.insert2(new TestUser(null, "test" + i));
                 }
                 return max;
             });

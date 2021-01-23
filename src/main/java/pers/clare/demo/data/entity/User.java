@@ -1,8 +1,6 @@
 package pers.clare.demo.data.entity;
 
 import lombok.*;
-import pers.clare.core.sqlquery.SQLStore;
-import pers.clare.core.sqlquery.SQLStoreFactory;
 
 import javax.persistence.*;
 

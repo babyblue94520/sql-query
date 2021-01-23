@@ -1,6 +1,6 @@
 package pers.clare.core.sqlquery.method;
 
-import pers.clare.core.sqlquery.*;
+import pers.clare.core.sqlquery.SQLStoreService;
 
 import java.lang.reflect.Method;
 

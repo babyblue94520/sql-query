@@ -1,4 +1,4 @@
-package pers.clare.core.sqlquery.jpa;
+package pers.clare.core.sqlquery.repository;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.*;
