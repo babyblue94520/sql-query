@@ -2,7 +2,9 @@
 
 spring:
   profiles:
-    active: h2
+    include:
+      - h2
+    active: dev
   data:
     redis:
       repositories:

@@ -1,4 +1,4 @@
-package pers.clare.swagger;
+package pers.clare.core.swagger;
 
 import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.TypeResolver;
@@ -6,6 +6,7 @@ import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -27,6 +28,7 @@ import static com.google.common.collect.Lists.transform;
 import static springfox.documentation.schema.Collections.*;
 import static springfox.documentation.schema.Types.typeNameFor;
 
+@Profile("dev")
 @Primary
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)

@@ -1,10 +1,11 @@
-package pers.clare.swagger;
+package pers.clare.core.swagger;
 
 import com.fasterxml.classmate.ResolvedType;
 import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -34,6 +35,7 @@ import static springfox.documentation.schema.Maps.isMapType;
 import static springfox.documentation.schema.Types.isBaseType;
 import static springfox.documentation.schema.Types.typeNameFor;
 
+@Profile("dev")
 @Primary
 @Component("OperationParameterReader")
 @Order(Ordered.HIGHEST_PRECEDENCE)

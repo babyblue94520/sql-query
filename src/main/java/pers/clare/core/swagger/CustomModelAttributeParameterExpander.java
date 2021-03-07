@@ -1,4 +1,4 @@
-package pers.clare.swagger;
+package pers.clare.core.swagger;
 
 import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.members.ResolvedField;
@@ -12,6 +12,7 @@ import com.google.common.collect.Sets;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -53,6 +54,7 @@ import static springfox.documentation.schema.Collections.isContainerType;
 import static springfox.documentation.schema.Types.isVoid;
 import static springfox.documentation.schema.Types.typeNameFor;
 
+@Profile("dev")
 @Log4j2
 @Primary
 @Component

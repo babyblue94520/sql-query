@@ -1,4 +1,4 @@
-package pers.clare.swagger;
+package pers.clare.core.swagger;
 
 import com.fasterxml.classmate.TypeResolver;
 import io.swagger.annotations.ApiModel;
@@ -6,6 +6,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.Ordered;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,6 +29,7 @@ import java.util.*;
 
 import static springfox.documentation.schema.AlternateTypeRules.newRule;
 
+@Profile("dev")
 @Configuration
 @EnableSwagger2
 public class SwaggerConfig {

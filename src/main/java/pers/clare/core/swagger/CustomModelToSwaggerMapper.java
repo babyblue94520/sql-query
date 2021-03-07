@@ -1,7 +1,8 @@
-package pers.clare.swagger;
+package pers.clare.core.swagger;
 
 import io.swagger.models.parameters.Parameter;
 import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -11,6 +12,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Profile("dev")
 @Primary
 @Component("ServiceModelToSwagger2Mapper")
 @Order(Ordered.HIGHEST_PRECEDENCE)
