@@ -3,7 +3,7 @@ package pers.clare.demo.controller;
 import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import pers.clare.demo.data.repository.TestJpaRepository;
+import pers.clare.demo.data.jpa.TestJpaRepository;
 import pers.clare.demo.data.sql.TestCrudRepository;
 import pers.clare.demo.data.sql.TestRepository;
 import pers.clare.demo.service.TestService;

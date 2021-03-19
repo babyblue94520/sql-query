@@ -1,12 +1,17 @@
 package pers.clare.demo.service;
 
+import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import pers.clare.core.sqlquery.aop.SqlConnectionReuse;
 import pers.clare.demo.data.entity.TestUser;
-import pers.clare.demo.data.repository.TestJpaRepository;
+import pers.clare.demo.data.jpa.TestJpaRepository;
 import pers.clare.demo.data.sql.TestCrudRepository;
 import pers.clare.demo.data.sql.TestRepository;
+
+import javax.transaction.Transactional;
+import java.sql.Connection;
+import java.util.Objects;
 
 @Service
 public class TestService {
@@ -25,9 +30,9 @@ public class TestService {
     public void reuse(int i ){
         Integer a = testRepository.define(i);
         Integer b = testRepository.id();
-//        if (!Objects.equals(a, b)) {
-//            System.out.println(a + ":" + b);
-//        }
+        if (!Objects.equals(a, b)) {
+            System.out.println(a + ":" + b);
+        }
     }
 
     @SqlConnectionReuse(transaction = true)
@@ -41,10 +46,14 @@ public class TestService {
         throw new IllegalArgumentException("test");
     }
 
+
+    @SqlConnectionReuse(transaction = true)
     public TestUser insert(
             TestUser testUser
     ) {
         testCrudRepository.insert(testUser);
+        testUser.setId(null);
+        proxy().insert2(testUser);
         return testCrudRepository.find(testUser);
     }
 
@@ -66,10 +75,16 @@ public class TestService {
     }
 
 
+    @SqlConnectionReuse(transaction = true)
     public TestUser insert2(
             TestUser testUser
     ) {
         TestUser testUser2 = testCrudRepository.insert(testUser);
-        return testUser2;
+//        return testUser2;
+        throw new IllegalArgumentException("test");
+    }
+
+    private TestService proxy(){
+        return (TestService)AopContext.currentProxy();
     }
 }

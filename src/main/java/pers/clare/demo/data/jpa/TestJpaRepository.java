@@ -1,4 +1,4 @@
-package pers.clare.demo.data.repository;
+package pers.clare.demo.data.jpa;
 
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import pers.clare.core.data.repository.ExtendedRepository;

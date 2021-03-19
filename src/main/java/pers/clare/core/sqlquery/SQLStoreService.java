@@ -5,8 +5,6 @@ import pers.clare.core.sqlquery.exception.SQLQueryException;
 import pers.clare.core.sqlquery.function.StoreResultSetHandler;
 import pers.clare.core.sqlquery.page.Page;
 import pers.clare.core.sqlquery.page.Pagination;
-import pers.clare.core.sqlquery.support.ConnectionReuse;
-import pers.clare.core.sqlquery.support.ConnectionReuseHolder;
 
 import javax.sql.DataSource;
 import java.sql.*;
@@ -32,20 +30,16 @@ public class SQLStoreService extends SQLService {
             , Object[] parameters
             , StoreResultSetHandler<T, R> storeResultSetHandler
     ) {
-        ConnectionReuse connectionReuse = ConnectionReuseHolder.get();
-        if (readonly && !connectionReuse.isReadonly()) {
-            readonly = false;
-        }
         Connection connection = null;
         try {
-            connection = connectionReuse.getConnection(getDataSource(readonly));
+            connection = getConnection(readonly);
             return doQueryHandler(connection, readonly, sqlStore, sql, parameters, storeResultSetHandler);
         } catch (SQLQueryException e) {
             throw e;
         } catch (Exception e) {
             throw new SQLQueryException(e.getMessage(), e);
         } finally {
-            close(connectionReuse, connection);
+            close(connection);
         }
     }
 
@@ -71,20 +65,16 @@ public class SQLStoreService extends SQLService {
             , T entity
             , StoreResultSetHandler<T, R> storeResultSetHandler
     ) {
-        ConnectionReuse connectionReuse = ConnectionReuseHolder.get();
-        if (readonly && !connectionReuse.isReadonly()) {
-            readonly = false;
-        }
         Connection connection = null;
         try {
-            connection = connectionReuse.getConnection(getDataSource(readonly));
+            connection = getConnection(readonly);
             return doQueryHandler(connection, readonly, sqlStore, entity, storeResultSetHandler);
         } catch (SQLQueryException e) {
             throw e;
         } catch (Exception e) {
             throw new SQLQueryException(e.getMessage(), e);
         } finally {
-            close(connectionReuse, connection);
+            close(connection);
         }
     }
 
@@ -106,19 +96,13 @@ public class SQLStoreService extends SQLService {
         }
     }
 
-    private final StoreResultSetHandler findHandler = this::findHandler;
-
     private <T> T findHandler(ResultSet rs, SQLStore<T> sqlStore) throws Exception {
         return SQLUtil.toInstance(sqlStore.constructorMap, rs);
     }
 
-    private final StoreResultSetHandler findSetHandler = this::findSetHandler;
-
     private <T> Set<T> findSetHandler(ResultSet rs, SQLStore<T> sqlStore) throws Exception {
         return SQLUtil.toSetInstance(sqlStore.constructorMap, rs);
     }
-
-    private final StoreResultSetHandler findAllHandler = this::findAllHandler;
 
     private <T> List<T> findAllHandler(ResultSet rs, SQLStore<T> sqlStore) throws Exception {
         return SQLUtil.toInstances(sqlStore.constructorMap, rs);
@@ -128,7 +112,7 @@ public class SQLStoreService extends SQLService {
             SQLStore<T> store
             , T entity
     ) {
-        return (T) queryHandler(false, store, entity, findHandler);
+        return queryHandler(false, store, entity, this::findHandler);
     }
 
     public <T> T find(
@@ -136,7 +120,7 @@ public class SQLStoreService extends SQLService {
             , SQLStore<T> sqlStore
             , T entity
     ) {
-        return (T) queryHandler(readonly, sqlStore, entity, findHandler);
+        return queryHandler(readonly, sqlStore, entity, this::findHandler);
     }
 
     public <T> T find(
@@ -144,7 +128,7 @@ public class SQLStoreService extends SQLService {
             , String sql
             , Object... parameters
     ) {
-        return (T) queryHandler(false, sqlStore, sql, parameters, findHandler);
+        return queryHandler(false, sqlStore, sql, parameters, this::findHandler);
     }
 
     public <T> T find(
@@ -153,7 +137,7 @@ public class SQLStoreService extends SQLService {
             , String sql
             , Object... parameters
     ) {
-        return (T) queryHandler(readonly, sqlStore, sql, parameters, findHandler);
+        return queryHandler(readonly, sqlStore, sql, parameters, this::findHandler);
 
     }
 
@@ -162,7 +146,7 @@ public class SQLStoreService extends SQLService {
             , String sql
             , Object... parameters
     ) {
-        return (Set<T>) queryHandler(false, sqlStore, sql, parameters, findSetHandler);
+        return queryHandler(false, sqlStore, sql, parameters, this::findSetHandler);
     }
 
     public <T> Set<T> findSet(
@@ -171,7 +155,7 @@ public class SQLStoreService extends SQLService {
             , String sql
             , Object... parameters
     ) {
-        return (Set<T>) queryHandler(readonly, sqlStore, sql, parameters, findSetHandler);
+        return queryHandler(readonly, sqlStore, sql, parameters, this::findSetHandler);
     }
 
     public <T> List<T> findAll(
@@ -179,7 +163,7 @@ public class SQLStoreService extends SQLService {
             , String sql
             , Object... parameters
     ) {
-        return (List<T>) queryHandler(false, sqlStore, sql, parameters, findAllHandler);
+        return queryHandler(false, sqlStore, sql, parameters, this::findAllHandler);
     }
 
     public <T> List<T> findAll(
@@ -188,7 +172,7 @@ public class SQLStoreService extends SQLService {
             , String sql
             , Object... parameters
     ) {
-        return (List<T>) queryHandler(readonly, sqlStore, sql, parameters, findAllHandler);
+        return queryHandler(readonly, sqlStore, sql, parameters, this::findAllHandler);
     }
 
     public <T> Page<T> page(
@@ -207,30 +191,19 @@ public class SQLStoreService extends SQLService {
             , Pagination pagination
             , Object... parameters
     ) {
-        ConnectionReuse connectionReuse = ConnectionReuseHolder.get();
-        if (readonly && !connectionReuse.isReadonly()) {
-            readonly = false;
-        }
         Connection connection = null;
         try {
-            connection = connectionReuse.getConnection(getDataSource(readonly));
+            connection = getConnection(readonly);
             List<T> list = SQLUtil.toInstances(sqlStore.constructorMap, go(connection, SQLUtil.buildPaginationSQL(pagination, sql), parameters));
             long total = list.size();
-            if (total == pagination.getSize()) {
-                ResultSet rs = go(connection, SQLUtil.buildTotalSQL(sql), parameters);
-                if (rs.next()) {
-                    total = rs.getLong(1);
-                } else {
-                    throw new SQLQueryException("query total error");
-                }
-            }
+            if (total == pagination.getSize()) total = getTotal(connection, sql, parameters);
             return Page.of(pagination.getPage(), pagination.getSize(), list, total);
         } catch (SQLQueryException e) {
             throw e;
         } catch (Exception e) {
             throw new SQLQueryException(e.getMessage(), e);
         } finally {
-            close(connectionReuse, connection);
+            close(connection);
         }
     }
 }

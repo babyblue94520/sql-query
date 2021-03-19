@@ -12,7 +12,7 @@ import pers.clare.core.sqlquery.SQLQuery;
 import pers.clare.core.sqlquery.SQLQueryReplaceBuilder;
 import pers.clare.core.sqlquery.annotation.Sql;
 import pers.clare.demo.data.entity.User;
-import pers.clare.demo.data.repository.UserRepository;
+import pers.clare.demo.data.jpa.UserRepository;
 
 
 /**

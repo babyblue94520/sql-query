@@ -2,15 +2,23 @@ package pers.clare.core.sqlquery.support;
 
 public class ConnectionReuseHolder {
 
-    private static final ThreadLocal<ConnectionReuse> cache = new NamedThreadLocal<>("Connection Cache Holder");
+    private static final ThreadLocal<ConnectionReuseManager> cache = new NamedThreadLocal<>("Connection Cache Holder");
 
     ConnectionReuseHolder() {
     }
 
+    public static ConnectionReuseManager init(boolean transaction) {
+        ConnectionReuseManager manager = cache.get();
+        if (manager == null) {
+            cache.set((manager = new ConnectionReuseManager()));
+        }
+        manager.init(transaction);
+        return manager;
+    }
+
     public static ConnectionReuse get() {
-        ConnectionReuse cc = cache.get();
-        if (cc == null) cache.set((cc = new ConnectionReuse()));
-        return cc;
+        ConnectionReuseManager manager = cache.get();
+        return manager == null ? null : manager.getCurrent();
     }
 
     static class NamedThreadLocal<T> extends ThreadLocal<T> {

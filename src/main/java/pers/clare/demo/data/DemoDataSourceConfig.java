@@ -30,7 +30,7 @@ import javax.sql.DataSource;
 )
 public class DemoDataSourceConfig {
     public static final String Prefix = "demo";
-    public static final String BasePackages = "pers.clare." + Prefix + ".data.repository";
+    public static final String BasePackages = "pers.clare." + Prefix + ".data.jpa";
     public static final String[] EntityPackages = {
             "pers.clare.demo.data.entity"
     };

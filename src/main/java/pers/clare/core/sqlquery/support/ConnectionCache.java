@@ -38,8 +38,9 @@ public class ConnectionCache {
         if (transaction) {
             connection.setAutoCommit(autocommit);
         }
-        connection.close();
+        if(!connection.isClosed()){
+            connection.close();
+        }
         connection = null;
-
     }
 }

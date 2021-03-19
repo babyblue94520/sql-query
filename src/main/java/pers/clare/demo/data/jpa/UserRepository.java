@@ -1,4 +1,4 @@
-package pers.clare.demo.data.repository;
+package pers.clare.demo.data.jpa;
 
 import pers.clare.core.data.repository.ExtendedRepository;
 import pers.clare.demo.data.entity.User;
