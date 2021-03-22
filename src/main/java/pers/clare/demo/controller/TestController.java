@@ -40,7 +40,7 @@ public class TestController {
 
     @GetMapping("define")
     public Object define(Integer id) {
-        return testRepository.define(id)+":"+testRepository.id();
+        return testRepository.define(id) + ":" + testRepository.id();
     }
 
     @PostMapping("id")
@@ -76,8 +76,14 @@ public class TestController {
 
     @PostMapping(value = "stack")
     public Page<TestUser> stack(@RequestBody TestUser testUser) {
-         testService.insert(testUser);
-         return testCrudRepository.page(Pagination.of(0,2000));
+        try {
+            testService.insert(testUser);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+        System.out.println(testCrudRepository.findAll());
+        testService.deleteAll();
+        return testCrudRepository.page(Pagination.of(0, 2000));
     }
 
 }

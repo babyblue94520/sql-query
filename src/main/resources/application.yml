@@ -1,7 +1,8 @@
 spring:
   profiles:
     include:
-      - h2
+#      - h2
+      - mysql
     active: dev
   data:
     redis:

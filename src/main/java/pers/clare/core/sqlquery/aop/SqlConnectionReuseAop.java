@@ -18,7 +18,11 @@ public class SqlConnectionReuseAop {
     public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
 
         SqlConnectionReuse sqlConnectionReuse = ((MethodSignature) joinPoint.getSignature()).getMethod().getDeclaredAnnotation(SqlConnectionReuse.class);
-        ConnectionReuseManager manager = ConnectionReuseHolder.init(sqlConnectionReuse.transaction());
+        ConnectionReuseManager manager = ConnectionReuseHolder.init(
+                sqlConnectionReuse.transaction()
+                , sqlConnectionReuse.isolation()
+                , sqlConnectionReuse.readonly()
+        );
         try {
             Object result = joinPoint.proceed();
             manager.commit();
@@ -26,7 +30,7 @@ public class SqlConnectionReuseAop {
         } catch (Exception e) {
             manager.rollback();
             throw e;
-        }finally {
+        } finally {
             manager.close();
         }
     }

@@ -1,6 +1,5 @@
 package pers.clare.core.sqlquery.support;
 
-
 import lombok.extern.log4j.Log4j2;
 
 import javax.sql.DataSource;
@@ -12,34 +11,25 @@ import java.util.Map;
 @Log4j2
 public class ConnectionReuse implements AutoCloseable {
     private final Map<DataSource, ConnectionCache> connections = new HashMap<>();
-    private boolean transaction;
-    private Integer isolation = null;
-    private boolean readonly = false;
+    boolean transaction;
+    int isolation;
+    boolean readonly;
 
-    ConnectionReuse() {
-        this(false, false);
-    }
-
-    ConnectionReuse(boolean transaction) {
-        this(transaction, false);
-    }
-
-    ConnectionReuse(boolean transaction, boolean readonly) {
+    ConnectionReuse(boolean transaction, int isolation, boolean readonly) {
         this.transaction = transaction;
+        this.isolation = isolation;
         this.readonly = readonly;
     }
-
 
     public Connection getConnection(DataSource dataSource) throws SQLException {
         ConnectionCache connectionCache = connections.get(dataSource);
         if (connectionCache == null) {
-            connections.put(dataSource, connectionCache = new ConnectionCache(dataSource));
+            connections.put(dataSource, connectionCache = new ConnectionCache(transaction, isolation, dataSource));
         }
-        return connectionCache.open(transaction);
+        return connectionCache.open();
     }
 
     public void commit() {
-        if (!transaction) return;
         for (ConnectionCache connectionCache : connections.values()) {
             try {
                 connectionCache.commit();
@@ -50,7 +40,6 @@ public class ConnectionReuse implements AutoCloseable {
     }
 
     public void rollback() {
-        if (!transaction) return;
         for (ConnectionCache connectionCache : connections.values()) {
             try {
                 connectionCache.rollback();
@@ -64,7 +53,7 @@ public class ConnectionReuse implements AutoCloseable {
     public void close() {
         for (ConnectionCache connectionCache : connections.values()) {
             try {
-                connectionCache.close(transaction);
+                connectionCache.close();
             } catch (SQLException e) {
                 log.error(e.getMessage(), e);
             }
@@ -77,15 +66,7 @@ public class ConnectionReuse implements AutoCloseable {
         connections.clear();
     }
 
-    public boolean isTransaction() {
-        return transaction;
-    }
-
     public boolean isReadonly() {
         return readonly;
-    }
-
-    public Integer getIsolation() {
-        return isolation;
     }
 }

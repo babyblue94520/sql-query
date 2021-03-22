@@ -27,7 +27,7 @@ public class TestService {
 
 
     @SqlConnectionReuse
-    public void reuse(int i ){
+    public void reuse(int i) {
         Integer a = testRepository.define(i);
         Integer b = testRepository.id();
         if (!Objects.equals(a, b)) {
@@ -36,12 +36,12 @@ public class TestService {
     }
 
     @SqlConnectionReuse(transaction = true)
-    public Object transaction(TestUser testUser){
+    public Object transaction(TestUser testUser) {
         System.out.println(testCrudRepository.count());
         testCrudRepository.insert(testUser);
         System.out.println(testCrudRepository.count());
         System.out.println(testCrudRepository.findById(1L));
-        testCrudRepository.update(new TestUser(1L,"testaaa"));
+        testCrudRepository.update(new TestUser(1L, "testaaa"));
         System.out.println(testCrudRepository.findById(1L));
         throw new IllegalArgumentException("test");
     }
@@ -52,6 +52,8 @@ public class TestService {
             TestUser testUser
     ) {
         testCrudRepository.insert(testUser);
+        System.out.println(proxy().find(testUser));
+        System.out.println(proxy().findCommitted(testUser));
         testUser.setId(null);
         proxy().insert2(testUser);
         return testCrudRepository.find(testUser);
@@ -84,7 +86,17 @@ public class TestService {
         throw new IllegalArgumentException("test");
     }
 
-    private TestService proxy(){
-        return (TestService)AopContext.currentProxy();
+    @SqlConnectionReuse(isolation = Connection.TRANSACTION_READ_UNCOMMITTED)
+    public TestUser find(TestUser testUser) {
+        return testCrudRepository.find(testUser);
+    }
+
+    @SqlConnectionReuse(transaction = true,isolation = Connection.TRANSACTION_SERIALIZABLE)
+    public TestUser findCommitted(TestUser testUser) {
+        return testCrudRepository.find(testUser);
+    }
+
+    private TestService proxy() {
+        return (TestService) AopContext.currentProxy();
     }
 }

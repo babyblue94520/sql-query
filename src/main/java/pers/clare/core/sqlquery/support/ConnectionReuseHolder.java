@@ -1,5 +1,7 @@
 package pers.clare.core.sqlquery.support;
 
+import java.sql.Connection;
+
 public class ConnectionReuseHolder {
 
     private static final ThreadLocal<ConnectionReuseManager> cache = new NamedThreadLocal<>("Connection Cache Holder");
@@ -7,12 +9,12 @@ public class ConnectionReuseHolder {
     ConnectionReuseHolder() {
     }
 
-    public static ConnectionReuseManager init(boolean transaction) {
+    public static ConnectionReuseManager init(boolean transaction, int isolation, boolean readonly) {
         ConnectionReuseManager manager = cache.get();
         if (manager == null) {
             cache.set((manager = new ConnectionReuseManager()));
         }
-        manager.init(transaction);
+        manager.init(transaction, isolation, readonly);
         return manager;
     }
 
