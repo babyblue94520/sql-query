@@ -1,13 +1,10 @@
 package pers.clare.demo.data.sql;
 
 import lombok.extern.log4j.Log4j2;
-import org.junit.Before;
 import org.junit.jupiter.api.*;
-import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import pers.clare.CoreApplicationTest;
-import pers.clare.demo.data.entity.TestUser;
+import pers.clare.demo.data.entity.User;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -18,41 +15,47 @@ import static org.junit.jupiter.api.Assertions.*;
 class TestCrudRepositoryTest {
 
     @Autowired
-    private TestCrudRepository testCrudRepository;
+    private UserRepository userRepository;
 
 
     @Test
     @Order(99)
     void deleteAll() {
-        testCrudRepository.deleteAll();
-        assertTrue(testCrudRepository.count() == 0);
+        userRepository.deleteAll();
+        assertTrue(userRepository.count() == 0);
     }
 
     @Test
     @Order(1)
     void test() {
-        TestUser testUser = new TestUser(null, "test");
-        testCrudRepository.insert(testUser);
-        assertNotNull(testUser.getId());
-        testUser = testCrudRepository.findById(testUser.getId());
-        assertNotNull(testUser);
+        User user = User.builder()
+                .name("test")
+                .build();
+        userRepository.insert(user);
+        assertNotNull(user.getId());
+        user = userRepository.findById(user.getId());
+        assertNotNull(user);
 
-        testUser = new TestUser(testUser.getId(), "update");
-        assertTrue(testCrudRepository.update(testUser) > 0);
+        user = User.builder()
+                .id(user.getId())
+                .name("test")
+                .build();
+        assertTrue(userRepository.update(user) > 0);
 
-        testUser = testCrudRepository.findById(testUser.getId());
-        assertEquals("update", testUser.getName());
-        assertTrue(testCrudRepository.delete(testUser) > 0);
+        user = userRepository.findById(user.getId());
+        assertEquals("update", user.getName());
+        assertTrue(userRepository.delete(user) > 0);
     }
 
     @Test
     @Order(2)
     void insertAutoKey() {
         long id = 999L;
-        TestUser testUser = new TestUser(id, "test1");
-        testCrudRepository.insert(testUser);
-        assertNotNull(testCrudRepository.findById(testUser.getId()));
+        User user = User.builder()
+                .id(id)
+                .name("test1")
+                .build();
+        userRepository.insert(user);
+        assertNotNull(userRepository.findById(user.getId()));
     }
-
-
 }

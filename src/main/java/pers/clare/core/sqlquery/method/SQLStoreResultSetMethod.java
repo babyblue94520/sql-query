@@ -6,8 +6,8 @@ import java.lang.reflect.Method;
 
 public class SQLStoreResultSetMethod extends SQLStoreMethod {
 
-    public SQLStoreResultSetMethod(Method method, String sql, SQLStoreService sqlService, Class<?> valueType) {
-        super(method, sql, sqlService, valueType);
+    public SQLStoreResultSetMethod(Method method, String sql, SQLStoreService sqlStoreService, Class<?> valueType, int paginationIndex) {
+        super(method, sql, sqlStoreService, valueType, paginationIndex);
     }
 
     @Override

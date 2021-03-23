@@ -1,7 +1,9 @@
 package pers.clare.core.sqlquery;
 
 import lombok.extern.log4j.Log4j2;
+import pers.clare.core.sqlquery.page.Pagination;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 
@@ -12,12 +14,13 @@ import java.util.Map;
  */
 @Log4j2
 public class SQLQuery {
+    private static final String NULL = "null";
+
     private final char[][] sqlParts;
 
     private final Map<String, Integer> keyIndex;
 
     final Object[] values;
-
 
     SQLQuery(char[][] sqlParts, Map<String, Integer> keyIndex) {
         this.sqlParts = sqlParts;
@@ -26,22 +29,27 @@ public class SQLQuery {
     }
 
     public SQLQuery value(String key, Object value) {
-        if (value == null || key == null) return this;
+        if (key == null) return this;
         Integer index = keyIndex.get(key);
         if (index == null) return this;
-        values[index] = value;
+        values[index] = value == null ? NULL : value;
         return this;
     }
 
     public SQLQuery value(String key, Object... value) {
-        if (value == null || key == null) return this;
+        if (key == null) return this;
         Integer index = keyIndex.get(key);
         if (index == null) return this;
-        values[index] = value;
+        values[index] = value == null ? NULL : value;
         return this;
     }
 
+    @Override
     public String toString() {
+        return toString(null);
+    }
+
+    public String toString(Pagination pagination) {
         StringBuilder sb = new StringBuilder();
         char[] cs;
         for (int i = 0, l = sqlParts.length; i < l; i++) {
@@ -52,6 +60,9 @@ public class SQLQuery {
                 sb.append(cs);
             }
         }
+        if (pagination != null) {
+            SQLUtil.buildPaginationSQL(pagination, sb);
+        }
         return sb.toString();
     }
 
@@ -60,12 +71,16 @@ public class SQLQuery {
             , Object value
     ) {
         if (value == null) return;
-        Class<?> valueClass = value.getClass();
-        if (valueClass.isArray() || Collection.class.isAssignableFrom(valueClass)) {
-            appendInValue(sb, value);
-            sb.deleteCharAt(sb.length() - 1);
+        if (value == NULL) {
+            sb.append(NULL);
         } else {
-            appendValue(sb, value);
+            Class<?> valueClass = value.getClass();
+            if (valueClass.isArray() || Collection.class.isAssignableFrom(valueClass)) {
+                appendInValue(sb, value);
+                sb.deleteCharAt(sb.length() - 1);
+            } else {
+                appendValue(sb, value);
+            }
         }
     }
 

@@ -75,14 +75,6 @@ public class SQLQueryBuilder {
         return new SQLQuery(sqlParts, keyIndex);
     }
 
-    public int keySize(String key) {
-        return keyIndex.size();
-    }
-
-    public boolean hasKey(String key) {
-        return keyIndex.containsKey(key);
-    }
-
     public static int findKeyCount(char[] sqlChars) {
         int count = 0;
         for (int i = 0, l = sqlChars.length; i < l; i++) {

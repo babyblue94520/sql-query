@@ -6,10 +6,10 @@ import java.sql.SQLException;
 
 
 public class ConnectionCache {
-    private DataSource dataSource;
+    private final DataSource dataSource;
+    private final boolean transaction;
+    private final int isolation;
     private Connection connection;
-    private boolean transaction;
-    private int isolation;
     private Boolean autocommit = null;
     private Integer transactionIsolation = null;
 

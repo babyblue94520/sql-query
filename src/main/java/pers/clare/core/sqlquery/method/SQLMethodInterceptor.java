@@ -1,4 +1,4 @@
-package pers.clare.core.sqlquery.repository;
+package pers.clare.core.sqlquery.method;
 
 import lombok.extern.log4j.Log4j2;
 import org.aopalliance.intercept.MethodInterceptor;
@@ -11,8 +11,8 @@ import java.util.Map;
 
 @Log4j2
 public class SQLMethodInterceptor implements MethodInterceptor {
-    private Object target;
-    private Map<Method, Method> methods;
+    private final Object target;
+    private final Map<Method, Method> methods;
     private final Map<Method, MethodInterceptor> queryMethods;
 
     public SQLMethodInterceptor(
@@ -28,11 +28,9 @@ public class SQLMethodInterceptor implements MethodInterceptor {
         for (Method method : interfaceClass.getMethods()) {
             try {
                 targetMethod = targetClass.getMethod(method.getName(), method.getParameterTypes());
-                if (targetMethod != null) {
-                    this.methods.put(method, targetMethod);
-                }
+                this.methods.put(method, targetMethod);
             } catch (NoSuchMethodException e) {
-
+                log.warn(e.getMessage());
             }
         }
     }

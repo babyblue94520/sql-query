@@ -1,5 +1,6 @@
 package pers.clare.demo.data;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -20,11 +21,8 @@ public class SQLQueryConfig {
     @Primary
     @Bean(name = SQLStoreServiceName)
     public SQLStoreService sqlStoreService(
-//            @Qualifier(DemoDataSourceConfig.DataSourceName)
-                    DataSource write
-            ,
-//            @Qualifier(SlaveDataSourceConfig.DataSourceName)
-                    DataSource read
+            @Qualifier(DemoDataSourceConfig.DataSourceName) DataSource write
+            , @Qualifier(SlaveDataSourceConfig.DataSourceName) DataSource read
     ) {
         return new SQLStoreService(write, read);
     }

@@ -77,8 +77,8 @@ public class SQLQueryReplaceBuilder {
 
     public static int findKeyCount(char[] sqlChars) {
         int count = 0;
-        for (int i = 0, l = sqlChars.length; i < l; i++) {
-            if (sqlChars[i] == startFlag) {
+        for (char sqlChar : sqlChars) {
+            if (sqlChar == startFlag) {
                 count++;
             }
         }

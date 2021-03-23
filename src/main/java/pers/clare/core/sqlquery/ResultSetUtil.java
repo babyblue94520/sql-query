@@ -1,20 +1,17 @@
 package pers.clare.core.sqlquery;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-
 import java.sql.*;
 import java.util.*;
 
 public class ResultSetUtil {
 
     public static String[] getNames(ResultSet rs) throws SQLException {
-        ResultSetMetaData rsmd = rs.getMetaData();
-        int count = rsmd.getColumnCount();
+        ResultSetMetaData metaData = rs.getMetaData();
+        int count = metaData.getColumnCount();
         int i;
         String[] names = new String[count];
         for (i = 0; i < count; ) {
-            names[i] = rsmd.getColumnLabel(++i);
+            names[i] = metaData.getColumnLabel(++i);
         }
         return names;
     }
@@ -32,12 +29,10 @@ public class ResultSetUtil {
     }
 
     public static Map<String, Object> toMap(Statement statement) throws SQLException {
-        try{
+        try (statement) {
             ResultSet rs = statement.getResultSet();
             if (rs.next()) return toMap(rs, getNames(rs));
             return null;
-        }finally {
-            statement.close();
         }
     }
 

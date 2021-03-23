@@ -9,7 +9,7 @@ import java.util.Stack;
 @Log4j2
 public class ConnectionReuseManager {
 
-    private Stack<ConnectionReuse> stack = new Stack<>();
+    private final Stack<ConnectionReuse> stack = new Stack<>();
 
     private ConnectionReuse prev = null;
 
@@ -62,7 +62,6 @@ public class ConnectionReuseManager {
             prev = current;
             current = stack.pop();
         }
-        if (prev == null || (prev == current && stack.size() > 0)) return false;
-        return true;
+        return prev != null && (prev != current || stack.size() <= 0);
     }
 }

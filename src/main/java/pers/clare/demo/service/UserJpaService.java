@@ -4,12 +4,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
-import pers.clare.core.sqlquery.page.Page;
-import pers.clare.core.sqlquery.page.Pagination;
 import pers.clare.demo.data.entity.User;
-import pers.clare.demo.data.sql.UserRepository;
-
-import java.util.List;
+import pers.clare.demo.data.jpa.UserJpaRepository;
 
 
 /**
@@ -18,18 +14,10 @@ import java.util.List;
 @Slf4j
 @Validated
 @Service
-public class UserService {
+public class UserJpaService {
 
     @Autowired
-    private UserRepository userRepository;
-
-    public List<User> findAll(){
-        return userRepository.findAll();
-    }
-
-    public Page<User> page(Pagination pagination){
-        return userRepository.page(pagination);
-    }
+    private UserJpaRepository userJpaRepository;
 
     public User insert(
             User user
@@ -39,13 +27,14 @@ public class UserService {
         user.setUpdateUser(1L);
         user.setCreateTime(t);
         user.setCreateUser(1L);
-        return userRepository.insert(user);
+        userJpaRepository.insert(user);
+        return userJpaRepository.insert(user);
     }
 
-    public int update(
+    public User update(
             User user
     ) {
-        return userRepository.update(user);
+        return userJpaRepository.update(user);
     }
 
 }

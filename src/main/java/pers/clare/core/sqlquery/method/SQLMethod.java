@@ -3,6 +3,7 @@ package pers.clare.core.sqlquery.method;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 import pers.clare.core.sqlquery.*;
+import pers.clare.core.sqlquery.page.Pagination;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
@@ -10,7 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public abstract class SQLMethod implements MethodInterceptor {
-    private static final Object[] emptyArguments = new Object[0];
+    protected static final Object[] emptyArguments = new Object[0];
     protected String sql;
     protected SQLStoreService sqlStoreService;
     protected SQLQueryReplaceBuilder sqlQueryReplaceBuilder;
@@ -19,10 +20,12 @@ public abstract class SQLMethod implements MethodInterceptor {
     protected Map<String, Integer> values;
     protected Method method;
     protected Parameter[] parameters;
+    protected int paginationIndex;
 
-    public SQLMethod(Method method, String sql, SQLStoreService sqlStoreService) {
+    public SQLMethod(Method method, String sql, SQLStoreService sqlStoreService, int paginationIndex) {
         this.sql = sql;
         this.sqlStoreService = sqlStoreService;
+        this.paginationIndex = paginationIndex;
         this.method = method;
         this.parameters = method.getParameters();
 
@@ -44,7 +47,7 @@ public abstract class SQLMethod implements MethodInterceptor {
         }
     }
 
-    protected String toSql(SQLQueryReplaceBuilder sqlQueryReplaceBuilder, MethodInvocation methodInvocation) {
+    protected String toSql(SQLQueryReplaceBuilder sqlQueryReplaceBuilder, MethodInvocation methodInvocation, Pagination pagination) {
         SQLQueryReplace replace = sqlQueryReplaceBuilder.build();
         Object[] args = methodInvocation.getArguments();
         for (Map.Entry<String, Integer> entry : replaces.entrySet()) {
@@ -54,28 +57,43 @@ public abstract class SQLMethod implements MethodInterceptor {
         for (Map.Entry<String, Integer> entry : values.entrySet()) {
             query.value(entry.getKey(), String.valueOf(args[entry.getValue()]));
         }
-        return query.toString();
+        return query.toString(pagination);
     }
 
-    protected String toSql(SQLQueryBuilder sqlQueryBuilder, MethodInvocation methodInvocation) {
+    protected String toSql(SQLQueryBuilder sqlQueryBuilder, MethodInvocation methodInvocation, Pagination pagination) {
         Object[] args = methodInvocation.getArguments();
         SQLQuery query = sqlQueryBuilder.build();
         for (int i = 0, l = parameters.length; i < l; i++) {
             query.value(parameters[i].getName(), args[i]);
         }
-        return query.toString();
+        return query.toString(pagination);
     }
 
     @Override
     public Object invoke(MethodInvocation methodInvocation) {
+        Pagination pagination = null;
+        if (paginationIndex != -1) {
+            pagination = (Pagination) methodInvocation.getArguments()[paginationIndex];
+        }
         if (sqlQueryReplaceBuilder != null) {
-            return sqlStoreService.update(toSql(sqlQueryReplaceBuilder, methodInvocation), emptyArguments);
+            return doInvoke(toSql(sqlQueryReplaceBuilder, methodInvocation, pagination), emptyArguments);
         } else if (sqlQueryBuilder != null) {
-            return doInvoke(toSql(sqlQueryBuilder, methodInvocation), emptyArguments);
+            return doInvoke(toSql(sqlQueryBuilder, methodInvocation, pagination), emptyArguments);
         } else {
-            return doInvoke(sql, methodInvocation.getArguments());
+            if (pagination == null) {
+                return doInvoke(sql, methodInvocation.getArguments());
+            } else {
+                Object[] arguments = new Object[methodInvocation.getArguments().length - 1];
+                int index = 0;
+                for (Object argument : methodInvocation.getArguments()) {
+                    if (index == paginationIndex) continue;
+                    arguments[index++] = argument;
+                }
+                return doInvoke(SQLUtil.buildPaginationSQL(pagination, sql), arguments);
+            }
         }
     }
 
     abstract protected Object doInvoke(String sql, Object[] arguments);
+
 }

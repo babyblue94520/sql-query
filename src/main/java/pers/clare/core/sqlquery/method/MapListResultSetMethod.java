@@ -6,8 +6,8 @@ import java.lang.reflect.Method;
 
 public class MapListResultSetMethod extends SQLSelectMethod {
 
-    public MapListResultSetMethod(Method method, String sql, SQLStoreService sqlService, Class<?> valueType) {
-        super(method, sql, sqlService, valueType);
+    public MapListResultSetMethod(Method method, String sql, SQLStoreService sqlService, Class<?> valueType, int paginationIndex) {
+        super(method, sql, sqlService, valueType, paginationIndex);
     }
 
     @Override

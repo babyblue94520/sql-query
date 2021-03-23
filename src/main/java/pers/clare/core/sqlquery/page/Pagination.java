@@ -1,8 +1,8 @@
 package pers.clare.core.sqlquery.page;
 
 public class Pagination {
-    private Integer page = 0;
-    private Integer size = 20;
+    private Integer page;
+    private Integer size;
     private String[] sorts;
 
     public static Pagination of(Integer page, Integer size) {
@@ -14,6 +14,7 @@ public class Pagination {
     }
 
     public Pagination() {
+        this(0, 20, null);
     }
 
     public Pagination(Integer page, Integer size) {

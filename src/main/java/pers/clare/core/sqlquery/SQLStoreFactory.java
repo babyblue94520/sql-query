@@ -1,7 +1,6 @@
 package pers.clare.core.sqlquery;
 
 import pers.clare.util.Asserts;
-import pers.clare.demo.data.entity.User;
 
 import javax.persistence.Column;
 import javax.persistence.GeneratedValue;
@@ -12,12 +11,12 @@ import java.util.*;
 
 public interface SQLStoreFactory {
 
-    Map<Class, SQLStore> entityMap = new HashMap<>();
+    Map<Class<?>, SQLStore<?>> entityMap = new HashMap<>();
 
     static <T> SQLStore<T> find(Class<T> clazz) {
         SQLStore store = entityMap.get(clazz);
         Asserts.notNull(store, "%s have not build SQLStore", clazz.getName());
-        return store;
+        return  (SQLStore<T>) store;
     }
 
     static boolean isIgnore(Class<?> clazz) {
@@ -35,7 +34,7 @@ public interface SQLStoreFactory {
         if (isIgnore(clazz)) throw new Error(String.format("%s can not build SQLStore", clazz));
         SQLStore store = entityMap.get(clazz);
         if (store != null
-                && ((crud && store.crud) || !crud)) return store;
+                && (!crud || store.crud)) return store;
 
         Map<Integer, Constructor<T>> constructorMap = new HashMap<>();
         Constructor<T>[] constructors = (Constructor<T>[]) clazz.getConstructors();
@@ -63,13 +62,6 @@ public interface SQLStoreFactory {
             Id id;
             String columnName, fieldName;
 
-            Map<String, Method> methodMap = new HashMap<>();
-            Method[] methods = clazz.getDeclaredMethods();
-            for (Method method : methods) {
-                if (method.getName().startsWith("get")) {
-                    methodMap.put(method.getName(), method);
-                }
-            }
             Field autoKey = null;
             for (Field field : fields) {
                 if (field.getAnnotation(Transient.class) != null) continue;
@@ -267,10 +259,5 @@ public interface SQLStoreFactory {
                 .append(':')
                 .append(name)
                 .append(',');
-    }
-
-    public static void main(String[] args) {
-        System.out.println(User.class.getName());
-
     }
 }

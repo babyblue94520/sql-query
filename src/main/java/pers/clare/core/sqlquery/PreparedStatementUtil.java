@@ -31,11 +31,9 @@ public class PreparedStatementUtil {
             return statement;
         } else {
             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-            if (parameters != null) {
-                int i = 1;
-                for (Object value : parameters) {
-                    ps.setObject(i++, value);
-                }
+            int i = 1;
+            for (Object value : parameters) {
+                ps.setObject(i++, value);
             }
             ps.executeUpdate();
             return ps;

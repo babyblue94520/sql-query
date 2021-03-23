@@ -9,6 +9,8 @@ import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 import pers.clare.core.sqlquery.SQLCrudRepositoryImpl;
 import pers.clare.core.sqlquery.SQLStoreService;
+import pers.clare.core.sqlquery.method.SQLMethodFactory;
+import pers.clare.core.sqlquery.method.SQLMethodInterceptor;
 
 @Log4j2
 public class SQLRepositoryFactory implements BeanClassLoaderAware, BeanFactoryAware {

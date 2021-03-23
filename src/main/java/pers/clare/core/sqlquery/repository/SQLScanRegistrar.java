@@ -38,7 +38,7 @@ public class SQLScanRegistrar implements ImportBeanDefinitionRegistrar, Resource
                 .fromMap(importingClassMetadata.getAnnotationAttributes(SQLScan.class.getName()));
         if (SQLEntityScanAttrs != null) {
             registerBeanDefinitions(importingClassMetadata, SQLEntityScanAttrs, registry,
-                    generateBaseBeanName(importingClassMetadata, 0));
+                    generateBaseBeanName(importingClassMetadata));
         }
     }
 
@@ -70,8 +70,8 @@ public class SQLScanRegistrar implements ImportBeanDefinitionRegistrar, Resource
 
     }
 
-    private static String generateBaseBeanName(AnnotationMetadata importingClassMetadata, int index) {
-        return importingClassMetadata.getClassName() + "#" + SQLScanRegistrar.class.getSimpleName() + "#" + index;
+    private static String generateBaseBeanName(AnnotationMetadata importingClassMetadata) {
+        return importingClassMetadata.getClassName() + "#" + SQLScanRegistrar.class.getSimpleName();
     }
 
     private static String getDefaultBasePackage(AnnotationMetadata importingClassMetadata) {

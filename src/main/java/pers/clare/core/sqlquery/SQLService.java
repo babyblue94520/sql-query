@@ -63,6 +63,7 @@ public class SQLService {
     }
 
     protected ResultSet go(Connection connection, String sql, Object[] parameters) throws SQLException {
+        log.info(sql);
         if (parameters.length == 0) {
             return connection.createStatement().executeQuery(sql);
         } else {

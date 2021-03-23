@@ -52,12 +52,12 @@ public class ClassPathSQLScanner extends ClassPathBeanDefinitionScanner {
 
     @Override
     protected boolean isCandidateComponent(AnnotatedBeanDefinition beanDefinition) {
-        if(beanDefinition.getMetadata().getInterfaceNames()==null||beanDefinition.getMetadata().getInterfaceNames().length==0){
+        if (beanDefinition.getMetadata().getInterfaceNames().length == 0) {
             return false;
         }
-        for(String interfaceName : beanDefinition.getMetadata().getInterfaceNames()){
-            if(!(SQLRepository.class.getName().equals(interfaceName)
-                    ||SQLCrudRepository.class.getName().equals(interfaceName))){
+        for (String interfaceName : beanDefinition.getMetadata().getInterfaceNames()) {
+            if (!(SQLRepository.class.getName().equals(interfaceName)
+                    || SQLCrudRepository.class.getName().equals(interfaceName))) {
                 return false;
             }
         }
@@ -85,11 +85,14 @@ public class ClassPathSQLScanner extends ClassPathBeanDefinitionScanner {
             definition = (GenericBeanDefinition) holder.getBeanDefinition();
             String beanClassName = definition.getBeanClassName();
             log.debug("Creating SQLEntityRepositoryFactoryBean with name '{}' and '{}' interface", holder.getBeanName(), beanClassName);
-
-            definition.getConstructorArgumentValues().addGenericArgumentValue(beanClassName);
-            definition.getConstructorArgumentValues().addGenericArgumentValue(annotationAttributes);
-            definition.setBeanClass(factoryBeanClass);
-            definition.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
+            if (beanClassName == null) {
+                log.warn("beanClassName is null.");
+            } else {
+                definition.getConstructorArgumentValues().addGenericArgumentValue(beanClassName);
+                definition.getConstructorArgumentValues().addGenericArgumentValue(annotationAttributes);
+                definition.setBeanClass(factoryBeanClass);
+                definition.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
+            }
         }
     }
 }

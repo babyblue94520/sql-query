@@ -10,8 +10,8 @@ public abstract class SQLStoreMethod extends SQLMethod {
 
     protected SQLStore<?> sqlStore;
 
-    public SQLStoreMethod(Method method, String sql, SQLStoreService sqlStoreService, Class<?> valueType) {
-        super(method, sql, sqlStoreService);
+    public SQLStoreMethod(Method method, String sql, SQLStoreService sqlStoreService, Class<?> valueType, int paginationIndex) {
+        super(method, sql, sqlStoreService, paginationIndex);
         this.sqlStore = SQLStoreFactory.build(valueType, false);
     }
 }

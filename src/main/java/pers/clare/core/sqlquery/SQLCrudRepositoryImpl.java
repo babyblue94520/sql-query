@@ -13,12 +13,12 @@ import java.util.List;
 
 public class SQLCrudRepositoryImpl<T> implements SQLCrudRepository<T> {
     private final SQLStore<T> sqlStore;
-    private SQLStoreService sqlStoreService;
+    private final SQLStoreService sqlStoreService;
 
     public SQLCrudRepositoryImpl(Class<T> repositoryClass, SQLStoreService sqlStoreService) {
         this.sqlStoreService = sqlStoreService;
         Type[] interfaces = repositoryClass.getGenericInterfaces();
-        if (interfaces == null || interfaces.length == 0) {
+        if (interfaces.length == 0) {
             throw new IllegalArgumentException("Repository interface must not be null!");
         }
         ParameterizedType type = (ParameterizedType) interfaces[0];
@@ -84,6 +84,7 @@ public class SQLCrudRepositoryImpl<T> implements SQLCrudRepository<T> {
 
     @Override
     public Next<T> next(Pagination pagination) {
+        // TODO
         return null;
     }
 
@@ -101,7 +102,7 @@ public class SQLCrudRepositoryImpl<T> implements SQLCrudRepository<T> {
             Boolean readonly
             , Object... ids
     ) {
-        return sqlStoreService.find(sqlStore, SQLUtil.setValue(sqlStore.selectById, sqlStore.keyFields, ids));
+        return sqlStoreService.find(readonly, sqlStore, SQLUtil.setValue(sqlStore.selectById, sqlStore.keyFields, ids));
     }
 
     public T find(
@@ -114,7 +115,7 @@ public class SQLCrudRepositoryImpl<T> implements SQLCrudRepository<T> {
             Boolean readonly
             , T entity
     ) {
-        return sqlStoreService.find(sqlStore, entity);
+        return sqlStoreService.find(readonly, sqlStore, entity);
     }
 
     public T insert(

@@ -61,7 +61,7 @@ public class ConnectionReuse implements AutoCloseable {
     }
 
     @Override
-    protected void finalize() throws Throwable {
+    protected void finalize() {
         close();
         connections.clear();
     }

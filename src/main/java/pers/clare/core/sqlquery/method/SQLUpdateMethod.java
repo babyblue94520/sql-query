@@ -7,7 +7,7 @@ import java.lang.reflect.Method;
 public class SQLUpdateMethod extends SQLMethod {
 
     public SQLUpdateMethod(Method method, String sql, SQLStoreService sqlStoreService) {
-        super(method, sql, sqlStoreService);
+        super(method, sql, sqlStoreService,-1);
     }
 
     @Override

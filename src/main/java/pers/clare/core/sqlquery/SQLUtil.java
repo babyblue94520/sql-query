@@ -17,27 +17,34 @@ public class SQLUtil {
     }
 
     public static String buildTotalSQL(String sql) {
-        return "select count(*) from(" +sql +")t";
+        return "select count(*) from(" + sql + ")t";
     }
 
     public static String buildPaginationSQL(
             Pagination pagination
             , String sql
     ) {
-        StringBuilder sb = new StringBuilder(sql);
+        return buildPaginationSQL(pagination, new StringBuilder(sql));
+    }
+
+    public static String buildPaginationSQL(
+            Pagination pagination
+            , StringBuilder sql
+    ) {
         String[] sorts = pagination.getSorts();
         if (sorts != null) {
-            sb.append(" order by ");
+            sql.append(" order by ");
             for (String sort : sorts) {
-                sb.append(sort)
+                sql.append(sort)
                         .append(',');
             }
-            sb.delete(sb.length() - 1, sb.length());
+            sql.delete(sql.length() - 1, sql.length());
         }
-        sb.append(" limit ")
+        sql.append(" limit ")
                 .append(pagination.getSize() * pagination.getPage())
+                .append(',')
                 .append(pagination.getSize());
-        return sb.toString();
+        return sql.toString();
     }
 
     public static StringBuilder turnCamelCase(
