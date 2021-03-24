@@ -1,0 +1,9 @@
+version: "3.7"
+
+services:
+  sql-query:
+    network_mode: host
+    build: .
+    container_name: sql-query
+    environment:
+      - '--server.port=9999'

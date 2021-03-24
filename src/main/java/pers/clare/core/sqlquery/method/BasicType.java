@@ -4,10 +4,10 @@ import pers.clare.core.sqlquery.SQLStoreService;
 
 import java.lang.reflect.Method;
 
-public class OneResultSetMethod extends SQLSelectMethod {
+public class BasicType extends SQLSelectMethod {
 
-    public OneResultSetMethod(Method method, String sql, SQLStoreService sqlStoreService, Class<?> valueType, int paginationIndex) {
-        super(method, sql, sqlStoreService, valueType);
+    BasicType(Class<?> valueType) {
+        super(valueType);
     }
 
     @Override

@@ -3,6 +3,7 @@ package pers.clare.core.sqlquery;
 import lombok.extern.log4j.Log4j2;
 import pers.clare.core.sqlquery.exception.SQLQueryException;
 import pers.clare.core.sqlquery.function.ResultSetHandler;
+import pers.clare.core.sqlquery.page.Next;
 import pers.clare.core.sqlquery.page.Page;
 import pers.clare.core.sqlquery.page.Pagination;
 import pers.clare.core.sqlquery.support.ConnectionReuse;
@@ -63,7 +64,7 @@ public class SQLService {
     }
 
     protected ResultSet go(Connection connection, String sql, Object[] parameters) throws SQLException {
-        log.info(sql);
+        log.debug(sql);
         if (parameters.length == 0) {
             return connection.createStatement().executeQuery(sql);
         } else {
@@ -133,6 +134,10 @@ public class SQLService {
         return ResultSetUtil.toSet(valueType, rs);
     }
 
+    private <T> Set<Map<String, T>> findAllMapSetHandler(ResultSet rs, Class<T> valueType) throws Exception {
+        return ResultSetUtil.toMapSet(valueType, rs);
+    }
+
     private <T> List<Map<String, T>> findAllMapHandler(ResultSet rs, Class<T> valueType) throws Exception {
         return ResultSetUtil.toMapList(valueType, rs);
     }
@@ -192,6 +197,23 @@ public class SQLService {
         return queryHandler(readonly, sql, valueType, parameters, this::findHandler);
     }
 
+    public <T> Set<Map<String, T>> findAllMapSet(
+            Class<T> valueType
+            , String sql
+            , Object... parameters
+    ) {
+        return queryHandler(false, sql, valueType, parameters, this::findAllMapSetHandler);
+    }
+
+    public <T> Set<Map<String, T>> findAllMapSet(
+            boolean readonly
+            , Class<T> valueType
+            , String sql
+            , Object... parameters
+    ) {
+        return queryHandler(readonly, sql, valueType, parameters, this::findAllMapSetHandler);
+    }
+
     public <T> List<Map<String, T>> findAllMap(
             Class<T> valueType
             , String sql
@@ -224,6 +246,38 @@ public class SQLService {
             , Object... parameters
     ) {
         return queryHandler(readonly, sql, valueType, parameters, this::findAllHandler);
+    }
+
+    public <T> Page<T> basicPage(
+            Class<T> clazz
+            , String sql
+            , Pagination pagination
+            , Object... parameters
+    ) {
+        return basicPage(false, clazz, sql, pagination, parameters);
+    }
+
+    public <T> Page<T> basicPage(
+            boolean readonly
+            , Class<T> clazz
+            , String sql
+            , Pagination pagination
+            , Object... parameters
+    ) {
+        Connection connection = null;
+        try {
+            connection = getConnection(readonly);
+            List<T> list = ResultSetUtil.toList(clazz, go(connection, SQLUtil.buildPaginationSQL(pagination, sql), parameters));
+            long total = list.size();
+            if (total == pagination.getSize()) total = getTotal(connection, sql, parameters);
+            return Page.of(pagination.getPage(), pagination.getSize(), list, total);
+        } catch (SQLQueryException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new SQLQueryException(e.getMessage(), e);
+        } finally {
+            close(connection);
+        }
     }
 
     public <T> Page<Map<String, T>> page(

@@ -2,9 +2,13 @@ package pers.clare.demo.controller;
 
 import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
+import pers.clare.core.sqlquery.page.Pagination;
 import pers.clare.demo.data.entity.User;
 import pers.clare.demo.data.jpa.UserJpaRepository;
+import pers.clare.demo.data.sql.SimpleUserRepository;
 import pers.clare.demo.data.sql.UserRepository;
 import pers.clare.demo.service.UserService;
 
@@ -22,26 +26,60 @@ public class PerformanceController {
     @Autowired
     private UserRepository userRepository;
     @Autowired
+    private SimpleUserRepository simpleUserRepository;
+
+    @Autowired
     private UserJpaRepository userJpaRepository;
     @Autowired
     private UserService userService;
 
+    @GetMapping("sql/page")
+    public String page(
+            @ApiParam(value = "執行緒數量", example = "8")
+            @RequestParam(required = false, defaultValue = "8") final int thread
+            , @ApiParam(value = "數量", example = "100")
+            @RequestParam(required = false, defaultValue = "100") final int max
+    ) throws Exception {
+        return run(thread, max, (i) -> simpleUserRepository.findAll(Pagination.of(0, 20)));
+    }
+
+    @GetMapping("sql/page/map")
+    public String pageMap(
+            @ApiParam(value = "執行緒數量", example = "8")
+            @RequestParam(required = false, defaultValue = "8") final int thread
+            , @ApiParam(value = "數量", example = "100")
+            @RequestParam(required = false, defaultValue = "100") final int max
+    ) throws Exception {
+        return run(thread, max, (i) -> simpleUserRepository.findAllMap(Pagination.of(0, 20)));
+    }
+
+    @GetMapping("jpa/page")
+    public String page2(
+            @ApiParam(value = "執行緒數量", example = "8")
+            @RequestParam(required = false, defaultValue = "8") final int thread
+            , @ApiParam(value = "數量", example = "100")
+            @RequestParam(required = false, defaultValue = "100") final int max
+    ) throws Exception {
+        long t = System.currentTimeMillis();
+        return run(thread, max, (i) -> userJpaRepository.findAll(PageRequest.of(0, 20)));
+    }
+
     @GetMapping("sql/insert")
-    public String test(
+    public String insert(
             @ApiParam(value = "執行緒數量", example = "8")
             @RequestParam(required = false, defaultValue = "8") final int thread
             , @ApiParam(value = "數量", example = "100")
             @RequestParam(required = false, defaultValue = "100") final int max
     ) throws Exception {
         return run(thread, max, (i) -> userService.insert(User.builder()
-                .account(Thread.currentThread().getName()+i)
+                .account(Thread.currentThread().getName() + i)
                 .name(Thread.currentThread().getName())
                 .build()
         ));
     }
 
     @GetMapping("jpa/insert")
-    public String test2(
+    public String insert2(
             @ApiParam(value = "執行緒數量", example = "8")
             @RequestParam(required = false, defaultValue = "8") final int thread
             , @ApiParam(value = "數量", example = "100")
@@ -49,7 +87,7 @@ public class PerformanceController {
     ) throws Exception {
         long t = System.currentTimeMillis();
         return run(thread, max, (i) -> userJpaRepository.insert(User.builder()
-                .account(Thread.currentThread().getName()+i)
+                .account(Thread.currentThread().getName() + i)
                 .name(Thread.currentThread().getName())
                 .updateTime(t)
                 .updateUser(1L)

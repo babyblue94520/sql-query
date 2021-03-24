@@ -1,18 +1,9 @@
 package pers.clare.core.sqlquery.method;
 
 import org.aopalliance.intercept.MethodInvocation;
-import pers.clare.core.sqlquery.SQLStore;
-import pers.clare.core.sqlquery.SQLStoreFactory;
-import pers.clare.core.sqlquery.SQLStoreService;
 import pers.clare.core.sqlquery.page.Pagination;
 
-import java.lang.reflect.Method;
-
 public abstract class PageMethod extends SQLMethod {
-
-    public PageMethod(Method method, String sql, SQLStoreService sqlStoreService, int paginationIndex) {
-        super(method, sql, sqlStoreService, paginationIndex);
-    }
 
     @Override
     public Object invoke(MethodInvocation methodInvocation) {

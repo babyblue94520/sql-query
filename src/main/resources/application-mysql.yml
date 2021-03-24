@@ -10,7 +10,7 @@ spring:
       jdbc-url: jdbc:mysql://192.168.3.9:3306/ps_game_quartz?useSSL=false&useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC&useServerPrepStmts=true
       username: root
       password: 123456
-      minimum-idle: 1
+      minimum-idle: 10
       maximum-pool-size: 200
       idle-timeout: 300000
       max-lifetime: 1200000
@@ -21,7 +21,7 @@ spring:
       jdbc-url: jdbc:mysql://192.168.3.9:3306/ps_game_quartz?useSSL=false&useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC&useServerPrepStmts=true
       username: root
       password: 123456
-      minimum-idle: 1
+      minimum-idle: 10
       maximum-pool-size: 200
       idle-timeout: 300000
       max-lifetime: 1200000

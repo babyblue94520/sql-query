@@ -74,20 +74,28 @@ public class ResultSetUtil {
         return result;
     }
 
+    public static <T> Set<Map<String, T>> toMapSet(Class<T> valueClass, ResultSet rs) throws SQLException {
+        return (Set<Map<String, T>>) toMapCollection(valueClass, rs, new HashSet<>());
+    }
+
     public static <T> List<Map<String, T>> toMapList(Class<T> valueClass, ResultSet rs) throws SQLException {
+        return (List<Map<String, T>>) toMapCollection(valueClass, rs, new ArrayList<>());
+    }
+
+    private static <T> Collection<Map<String, T>> toMapCollection(Class<T> valueClass, ResultSet rs, Collection<Map<String, T>> collection) throws SQLException {
         String[] names = getNames(rs);
-        List<Map<String, T>> list = new ArrayList<>();
         if (valueClass == Object.class) {
             while (rs.next()) {
-                list.add((Map<String, T>) toMap(rs, names));
+                collection.add((Map<String, T>) toMap(rs, names));
             }
         } else {
             while (rs.next()) {
-                list.add(toMap(valueClass, rs, names));
+                collection.add(toMap(valueClass, rs, names));
             }
         }
-        return list;
+        return collection;
     }
+
 
     public static <T> List<T> toList(Class<T> clazz, ResultSet rs) throws SQLException {
         List<T> result = new ArrayList<>();

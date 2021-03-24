@@ -1,15 +1,22 @@
 package pers.clare.core.sqlquery.annotation;
 
+
 import java.lang.annotation.*;
 
 /**
  * 載入SQL標籤
  */
-@Target({ElementType.FIELD, ElementType.METHOD})
+@Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 public @interface Sql {
-    String name() default "";
+    /**
+     * sql
+     */
+    String value() default "";
 
-    String query() default "";
+    /**
+     * Use name to get SQL from XML
+     */
+    String name() default "";
 }

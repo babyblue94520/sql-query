@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE SQL>
+<SQL>
+	<findAllMapXML><![CDATA[
+		select id
+			,name
+			,create_time
+		from user
+	]]></findAllMapXML>
+	<findAllMapXML2><![CDATA[
+		select id
+			,name
+			,create_time
+			,create_user
+		from user
+	]]></findAllMapXML2>
+</SQL>

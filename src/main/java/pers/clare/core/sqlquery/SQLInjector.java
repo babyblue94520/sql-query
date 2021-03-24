@@ -52,7 +52,7 @@ public class SQLInjector {
                 tagName = sql.name();
                 if (StringUtils.isEmpty(tagName)) tagName = field.getName();
                 content = contents.get(tagName);
-                if (StringUtils.isEmpty(content)) content = sql.query();
+                if (StringUtils.isEmpty(content)) content = sql.value();
                 if (StringUtils.isEmpty(content))
                     throw new Error(String.format("%s can not load sql", field.getName()));
                 Object obj = Modifier.isStatic(field.getModifiers()) ? clazz : target;

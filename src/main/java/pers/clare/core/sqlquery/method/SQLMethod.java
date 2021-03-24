@@ -20,15 +20,10 @@ public abstract class SQLMethod implements MethodInterceptor {
     protected Map<String, Integer> values;
     protected Method method;
     protected Parameter[] parameters;
-    protected int paginationIndex;
+    protected int paginationIndex = -1;
 
-    public SQLMethod(Method method, String sql, SQLStoreService sqlStoreService, int paginationIndex) {
+    public void setSql(String sql) {
         this.sql = sql;
-        this.sqlStoreService = sqlStoreService;
-        this.paginationIndex = paginationIndex;
-        this.method = method;
-        this.parameters = method.getParameters();
-
         char[] cs = sql.toCharArray();
         if (SQLQueryReplaceBuilder.findKeyCount(cs) > 0) {
             sqlQueryReplaceBuilder = new SQLQueryReplaceBuilder(cs);
@@ -47,6 +42,19 @@ public abstract class SQLMethod implements MethodInterceptor {
         }
     }
 
+    public void setMethod(Method method) {
+        this.method = method;
+        this.parameters = method.getParameters();
+    }
+
+    public void setPaginationIndex(int paginationIndex) {
+        this.paginationIndex = paginationIndex;
+    }
+
+    public void setSqlStoreService(SQLStoreService sqlStoreService) {
+        this.sqlStoreService = sqlStoreService;
+    }
+
     protected String toSql(SQLQueryReplaceBuilder sqlQueryReplaceBuilder, MethodInvocation methodInvocation, Pagination pagination) {
         SQLQueryReplace replace = sqlQueryReplaceBuilder.build();
         Object[] args = methodInvocation.getArguments();
@@ -55,7 +63,7 @@ public abstract class SQLMethod implements MethodInterceptor {
         }
         SQLQuery query = replace.buildQuery();
         for (Map.Entry<String, Integer> entry : values.entrySet()) {
-            query.value(entry.getKey(), String.valueOf(args[entry.getValue()]));
+            query.value(entry.getKey(), args[entry.getValue()]);
         }
         return query.toString(pagination);
     }
