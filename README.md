@@ -407,13 +407,13 @@ public class SQLQueryConfig {
                     ,create_time
                 from user
             ]]></findAllMapXML>
-            <findAllMapXML2><![CDATA[
+            <pageMapXML><![CDATA[
                 select *
                 from user
                 where create_time between :startTime and :endTime
                 {andId}
                 {andName}
-            ]]></findAllMapXML2>
+            ]]></pageMapXML>
         </SQL>
         ```
 
