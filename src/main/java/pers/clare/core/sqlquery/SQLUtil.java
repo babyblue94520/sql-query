@@ -1,17 +1,17 @@
 package pers.clare.core.sqlquery;
 
 import pers.clare.core.sqlquery.exception.SQLQueryException;
+import pers.clare.core.sqlquery.function.FieldSetHandler;
 import pers.clare.core.sqlquery.page.Pagination;
 
-import java.lang.reflect.*;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.util.*;
 
 
 public class SQLUtil {
-    private static final boolean camelCase = true;
-    private static final char[] get = new char[]{'g', 'e', 't'};
 
     SQLUtil() {
     }
@@ -45,78 +45,6 @@ public class SQLUtil {
                 .append(',')
                 .append(pagination.getSize());
         return sql.toString();
-    }
-
-    public static StringBuilder turnCamelCase(
-            StringBuilder sb
-            , String str
-    ) {
-        char[] bs = str.toCharArray();
-        int l = bs.length, c = -1;
-        char[] nb = new char[l * 2];
-        char b;
-        if (camelCase) {
-            for (char value : bs) {
-                b = value;
-                // 移除 ';' 結束字元
-                if (b == 59) continue;
-                // 紀錄最後的 '.'
-                if (b == 46) {
-                    c = -1;
-                    continue;
-                }
-                // 駝峰換底線
-                if (b > 64 && b < 91) {
-                    nb[++c] = '_';
-                    b = Character.toLowerCase(b);
-                }
-                nb[++c] = b;
-            }
-        } else {
-            for (char value : bs) {
-                b = value;
-                // 移除 ';' 結束字元
-                if (b == 59) continue;
-                // 紀錄最後的 '.'
-                if (b == 46) {
-                    c = -1;
-                    continue;
-                }
-                nb[++c] = b;
-            }
-        }
-        sb.append(nb, 1, c);
-        return sb;
-    }
-
-    public static String convert(String name) {
-        int l = name.length();
-        char[] cs = name.toCharArray();
-        char[] rs = new char[l * 2 + 2];
-        rs[0] = '`';
-        char c = cs[0];
-        rs[1] = (c < 97 ? Character.toLowerCase(c) : c);
-        int index = 2;
-        for (int i = 1; i < l; i++) {
-            c = cs[i];
-            if (c < 97) {
-                rs[index++] = '_';
-                rs[index++] = Character.toLowerCase(c);
-            } else {
-                rs[index++] = c;
-            }
-        }
-        rs[index++] = '`';
-        return new String(rs, 0, index);
-    }
-
-    public static String toGetterName(String name) {
-        int l = name.length();
-        char[] rs = new char[l + 3];
-        System.arraycopy(get, 0, rs, 0, 3);
-        name.getChars(0, l, rs, 3);
-        rs[3] = Character.toUpperCase(rs[3]);
-        return new String(rs);
     }
 
     public static String setValue(SQLQueryBuilder sqlQueryBuilder, Field[] fields, Object[] parameters) {
@@ -154,50 +82,48 @@ public class SQLUtil {
         }
     }
 
-    public static <T> T toInstance(Map<Integer, Constructor<T>> constructorMap, ResultSet rs) throws Exception {
+    public static <T> T toInstance(SQLStore<T> sqlStore, ResultSet rs) throws Exception {
+        FieldSetHandler[] fields = toFields(sqlStore.fieldSetMap, rs.getMetaData());
         if (rs.next()) {
-            return buildInstance(findConstructor(constructorMap, rs.getMetaData()), rs);
+            return buildInstance(sqlStore.constructor, fields, rs);
         }
         return null;
     }
 
-    public static <T> Set<T> toSetInstance(Map<Integer, Constructor<T>> constructorMap, ResultSet rs) throws Exception {
+    public static <T> Set<T> toSetInstance(SQLStore<T> sqlStore, ResultSet rs) throws Exception {
         Set<T> result = new HashSet<>();
-        Constructor<T> constructor = findConstructor(constructorMap, rs.getMetaData());
+        FieldSetHandler[] fields = toFields(sqlStore.fieldSetMap, rs.getMetaData());
         while (rs.next()) {
-            result.add(buildInstance(constructor, rs));
+            result.add(buildInstance(sqlStore.constructor, fields, rs));
         }
         return result;
     }
 
-    public static <T> List<T> toInstances(Map<Integer, Constructor<T>> constructorMap, ResultSet rs) throws Exception {
+    public static <T> List<T> toInstances(SQLStore<T> sqlStore, ResultSet rs) throws Exception {
         List<T> list = new ArrayList<>();
-        Constructor<T> constructor = findConstructor(constructorMap, rs.getMetaData());
+        FieldSetHandler[] fields = toFields(sqlStore.fieldSetMap, rs.getMetaData());
         while (rs.next()) {
-            list.add(buildInstance(constructor, rs));
+            list.add(buildInstance(sqlStore.constructor, fields, rs));
         }
         return list;
     }
 
-    private static <T> T buildInstance(Constructor<T> constructor, ResultSet rs) throws Exception {
-        int l = constructor.getParameterCount();
-        Parameter[] parameters = constructor.getParameters();
-        Object[] values = new Object[l];
-        for (int i = 0; i < l; i++) {
-            values[i] = rs.getObject(i + 1, parameters[i].getType());
+    private static <T> T buildInstance(Constructor<T> constructor, FieldSetHandler[] fields, ResultSet rs) throws Exception {
+        T target = constructor.newInstance();
+        int i = 1;
+        for (FieldSetHandler field : fields) {
+            if (field == null) continue;
+            field.apply(target, rs, i++);
         }
-        return constructor.newInstance(values);
+        return target;
     }
 
-    private static <T> Constructor<T> findConstructor(Map<Integer, Constructor<T>> constructorMap, ResultSetMetaData metaData) throws Exception {
-        Constructor<T> constructor = constructorMap.get(metaData.getColumnCount());
-        if (constructor != null) return constructor;
-        StringBuilder columns = new StringBuilder("(");
-        for (int i = 0, l = metaData.getColumnCount(); i < l; i++) {
-            columns.append(metaData.getColumnName(i + 1));
-            columns.append(',');
+    private static FieldSetHandler[] toFields(Map<String, FieldSetHandler> fieldMap, ResultSetMetaData metaData) throws Exception {
+        int l = metaData.getColumnCount();
+        FieldSetHandler[] fields = new FieldSetHandler[l];
+        for (int i = 0; i < l; i++) {
+            fields[i] = fieldMap.get(metaData.getColumnName(i + 1));
         }
-        columns.replace(columns.length() - 1, columns.length(), ")");
-        throw new Exception("Cannot find constructor" + columns);
+        return fields;
     }
 }

@@ -45,6 +45,6 @@ management:
   info:
     git:
       mode: full
-logging:
-  level:
-    pers.clare: debug
+#logging:
+#  level:
+#    pers.clare: debug

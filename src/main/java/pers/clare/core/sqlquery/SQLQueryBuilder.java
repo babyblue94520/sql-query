@@ -1,8 +1,6 @@
 package pers.clare.core.sqlquery;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class SQLQueryBuilder {
 
@@ -10,7 +8,7 @@ public class SQLQueryBuilder {
     private final char[][] sqlParts;
 
     // 需要被替換成SQL的key陣列
-    private final Map<String, Integer> keyIndex;
+    private final Map<String, List<Integer>> keyIndex;
 
     public SQLQueryBuilder(String sql) {
         this(sql.toCharArray());
@@ -41,7 +39,7 @@ public class SQLQueryBuilder {
                                 case ' ':
                                 case ',':
                                 case ')':
-                                    keyIndex.put(new String(temp, 0, tempLength), listCount++);
+                                    put(keyIndex, new String(temp, 0, tempLength), listCount++);
                                     tempLength = 0;
                                     temp[tempLength++] = c;
                                     b = true;
@@ -52,7 +50,7 @@ public class SQLQueryBuilder {
                             if (b) break;
                         }
                         if (!b) {
-                            keyIndex.put(new String(temp, 0, tempLength), listCount++);
+                            put(keyIndex, new String(temp, 0, tempLength), listCount++);
                             tempLength = 0;
                         }
                         break;
@@ -83,6 +81,14 @@ public class SQLQueryBuilder {
             }
         }
         return count;
+    }
+
+    private static void put(Map<String, List<Integer>> keyIndex, String key, Integer index) {
+        List<Integer> list = keyIndex.get(key);
+        if (list == null) {
+            keyIndex.put(key, list = new ArrayList<>());
+        }
+        list.add(index);
     }
 
     public static void main(String[] args) {

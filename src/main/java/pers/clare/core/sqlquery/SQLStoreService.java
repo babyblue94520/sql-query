@@ -97,15 +97,15 @@ public class SQLStoreService extends SQLService {
     }
 
     private <T> T findHandler(ResultSet rs, SQLStore<T> sqlStore) throws Exception {
-        return SQLUtil.toInstance(sqlStore.constructorMap, rs);
+        return SQLUtil.toInstance(sqlStore, rs);
     }
 
     private <T> Set<T> findSetHandler(ResultSet rs, SQLStore<T> sqlStore) throws Exception {
-        return SQLUtil.toSetInstance(sqlStore.constructorMap, rs);
+        return SQLUtil.toSetInstance(sqlStore, rs);
     }
 
     private <T> List<T> findAllHandler(ResultSet rs, SQLStore<T> sqlStore) throws Exception {
-        return SQLUtil.toInstances(sqlStore.constructorMap, rs);
+        return SQLUtil.toInstances(sqlStore, rs);
     }
 
     public <T> T find(
@@ -194,7 +194,7 @@ public class SQLStoreService extends SQLService {
         Connection connection = null;
         try {
             connection = getConnection(readonly);
-            List<T> list = SQLUtil.toInstances(sqlStore.constructorMap, go(connection, SQLUtil.buildPaginationSQL(pagination, sql), parameters));
+            List<T> list = SQLUtil.toInstances(sqlStore, go(connection, SQLUtil.buildPaginationSQL(pagination, sql), parameters));
             long total = list.size();
             if (total == pagination.getSize()) total = getTotal(connection, sql, parameters);
             return Page.of(pagination.getPage(), pagination.getSize(), list, total);

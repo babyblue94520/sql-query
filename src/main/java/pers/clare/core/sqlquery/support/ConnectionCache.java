@@ -30,7 +30,6 @@ public class ConnectionCache {
                 autocommit = true;
                 connection.setAutoCommit(false);
             }
-            System.out.println(isolation+" "+connection.getTransactionIsolation());
             if (isolation != Connection.TRANSACTION_NONE && isolation != connection.getTransactionIsolation()) {
                 transactionIsolation = connection.getTransactionIsolation();
                 connection.setTransactionIsolation(isolation);

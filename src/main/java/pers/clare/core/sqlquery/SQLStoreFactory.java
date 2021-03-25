@@ -1,5 +1,9 @@
 package pers.clare.core.sqlquery;
 
+import pers.clare.core.sqlquery.exception.SQLQueryException;
+import pers.clare.core.sqlquery.function.FieldGetHandler;
+import pers.clare.core.sqlquery.function.FieldSetHandler;
+import pers.clare.core.sqlquery.naming.NamingStrategy;
 import pers.clare.util.Asserts;
 
 import javax.persistence.Column;
@@ -8,18 +12,23 @@ import javax.persistence.Id;
 import javax.persistence.Transient;
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.regex.Pattern;
 
-public interface SQLStoreFactory {
+public class SQLStoreFactory {
+    private static final Pattern defaultValuePattern = Pattern.compile("^.+default\\s+[']?([^\\s']+)[\\s']?$", Pattern.CASE_INSENSITIVE);
 
-    Map<Class<?>, SQLStore<?>> entityMap = new HashMap<>();
+    static Map<Class<?>, SQLStore<?>> sqlStoreCacheMap = new HashMap<>();
 
-    static <T> SQLStore<T> find(Class<T> clazz) {
-        SQLStore store = entityMap.get(clazz);
-        Asserts.notNull(store, "%s have not build SQLStore", clazz.getName());
-        return  (SQLStore<T>) store;
+    SQLStoreFactory() {
     }
 
-    static boolean isIgnore(Class<?> clazz) {
+    public static <T> SQLStore<T> find(Class<T> clazz) {
+        SQLStore<T> store = (SQLStore<T>) sqlStoreCacheMap.get(clazz);
+        Asserts.notNull(store, "%s have not build SQLStore", clazz.getName());
+        return store;
+    }
+
+    public static boolean isIgnore(Class<?> clazz) {
         return clazz == null
                 || clazz.isPrimitive()
                 || clazz.getName().startsWith("java.lang")
@@ -30,21 +39,13 @@ public interface SQLStoreFactory {
                 ;
     }
 
-    static <T> SQLStore<T> build(Class<T> clazz, boolean crud) {
+    public static <T> SQLStore<T> build(Class<T> clazz, boolean crud) {
         if (isIgnore(clazz)) throw new Error(String.format("%s can not build SQLStore", clazz));
-        SQLStore store = entityMap.get(clazz);
+        SQLStore<T> store = (SQLStore<T>) sqlStoreCacheMap.get(clazz);
         if (store != null
                 && (!crud || store.crud)) return store;
-
-        Map<Integer, Constructor<T>> constructorMap = new HashMap<>();
-        Constructor<T>[] constructors = (Constructor<T>[]) clazz.getConstructors();
-        for (Constructor<T> constructor : constructors) {
-            if (constructor.getParameterCount() > 0) {
-                constructorMap.put(constructor.getParameterCount(), constructor);
-            }
-        }
         if (crud) {
-            String tableName = SQLUtil.convert(clazz.getSimpleName());
+            String tableName = NamingStrategy.convert(clazz.getSimpleName());
             StringBuilder selectColumns = new StringBuilder();
             StringBuilder insertColumns = new StringBuilder();
             StringBuilder insertAutoKeyColumns = new StringBuilder();
@@ -55,20 +56,49 @@ public interface SQLStoreFactory {
             Field[] fields = clazz.getDeclaredFields();
             int length = fields.length;
             int keyCount = 0, insertCount = 0, updateCount = 0;
+            Map<String, FieldSetHandler> fieldSetMap = new HashMap<>(fields.length * 3);
+            Map<String, FieldGetHandler> fieldGetMap = new HashMap<>(fields.length);
             Field[] keyMethods = new Field[length];
             Field[] insertMethods = new Field[length];
             Field[] updateMethods = new Field[length];
             Column column;
             Id id;
             String columnName, fieldName;
-
+            String name;
             Field autoKey = null;
+            FieldSetHandler fieldSetHandler;
+            FieldGetHandler fieldGetHandler;
             for (Field field : fields) {
-                if (field.getAnnotation(Transient.class) != null) continue;
                 field.setAccessible(true);
                 column = field.getAnnotation(Column.class);
                 fieldName = field.getName();
-                columnName = column == null ? SQLUtil.convert(field.getName()) : column.name();
+                columnName = column == null ? NamingStrategy.convert(field.getName()) : column.name();
+                name = columnName.replaceAll("`", "");
+                if (field.getType() == Object.class) {
+                    fieldSetHandler = (target, rs, index) -> field.set(target, rs.getObject(index));
+                } else {
+                    fieldSetHandler = (target, rs, index) -> field.set(target, rs.getObject(index, field.getType()));
+                }
+
+                if (column.nullable()) {
+                    fieldGetHandler = (target) -> field.get(target);
+                } else {
+
+                    fieldGetHandler = (target) -> {
+                        Object value = field.get(target);
+                        if (value == null) {
+                            return value;
+                        } else {
+                            return value;
+                        }
+                    };
+                }
+
+                fieldSetMap.put(fieldName, fieldSetHandler);
+                fieldSetMap.put(name, fieldSetHandler);
+                fieldSetMap.put(name.toUpperCase(), fieldSetHandler);
+                if (field.getAnnotation(Transient.class) != null) continue;
+
                 id = field.getAnnotation(Id.class);
                 if (id == null) {
                     if (column == null) {
@@ -132,119 +162,189 @@ public interface SQLStoreFactory {
             updateSet.delete(updateSet.length() - 1, updateSet.length());
             whereId.delete(whereId.length() - 5, whereId.length());
 
-            int tl = tableName.length(), scl = selectColumns.length(), icl = insertColumns.length(), vl = values.length(), aicl = insertAutoKeyColumns.length(), avl = autoKeyValues.length(), ul = updateSet.length(), wl = whereId.length();
-            char[] chars;
-            int index;
-
-            // count(*)
-            chars = new char[21 + tl];
-            index = 0;
-            "select count(*) from ".getChars(0, 21, chars, index);
-            index += 21;
-            tableName.getChars(0, tl, chars, index);
-            String count = new String(chars);
-            // countById(*)
-            chars = new char[21 + tl + wl];
-            index = 0;
-            "select count(*) from ".getChars(0, 21, chars, index);
-            index += 21;
-            tableName.getChars(0, tl, chars, index);
-            index += tl;
-            whereId.getChars(0, wl, chars, index);
-            SQLQueryBuilder countById = new SQLQueryBuilder(chars);
-
-            // select all
-            chars = new char[13 + tl + scl];
-            index = 0;
-            "select ".getChars(0, 7, chars, index);
-            index += 7;
-            selectColumns.getChars(0, scl, chars, index);
-            index += scl;
-            " from ".getChars(0, 6, chars, index);
-            index += 6;
-            tableName.getChars(0, tl, chars, index);
-            String select = new String(chars);
-
-            // select one
-            chars = new char[13 + tl + scl + wl];
-            index = 0;
-            "select ".getChars(0, 7, chars, index);
-            index += 7;
-            selectColumns.getChars(0, scl, chars, index);
-            index += scl;
-            " from ".getChars(0, 6, chars, index);
-            index += 6;
-            tableName.getChars(0, tl, chars, index);
-            index += tl;
-            whereId.getChars(0, wl, chars, index);
-            SQLQueryBuilder selectById = new SQLQueryBuilder(chars);
-
-            // insert
-            chars = new char[14 + tl + icl + vl];
-            index = 0;
-            "insert into ".getChars(0, 12, chars, index);
-            index += 12;
-            tableName.getChars(0, tl, chars, index);
-            index += tl;
-            chars[index++] = '(';
-            insertColumns.getChars(0, icl, chars, index);
-            index += icl;
-            chars[index++] = ')';
-            values.getChars(0, vl, chars, index);
-            SQLQueryBuilder insert = new SQLQueryBuilder(chars);
-
-            // insert auto key
-            chars = new char[14 + tl + aicl + avl];
-            index = 0;
-            "insert into ".getChars(0, 12, chars, index);
-            index += 12;
-            tableName.getChars(0, tl, chars, index);
-            index += tl;
-            chars[index++] = '(';
-            insertAutoKeyColumns.getChars(0, aicl, chars, index);
-            index += aicl;
-            chars[index++] = ')';
-            autoKeyValues.getChars(0, avl, chars, index);
-            SQLQueryBuilder insertAutoKey = new SQLQueryBuilder(chars);
-
-            // update
-            chars = new char[12 + tl + ul + wl];
-            index = 0;
-            "update ".getChars(0, 7, chars, index);
-            index += 7;
-            tableName.getChars(0, tl, chars, index);
-            index += tl;
-            " set ".getChars(0, 5, chars, index);
-            index += 5;
-            updateSet.getChars(0, ul, chars, index);
-            index += ul;
-            whereId.getChars(0, wl, chars, index);
-            SQLQueryBuilder update = new SQLQueryBuilder(chars);
-
-            // delete
-            chars = new char[12 + tl];
-            index = 0;
-            "delete from ".getChars(0, 12, chars, index);
-            index += 12;
-            tableName.getChars(0, tl, chars, index);
-            String deleteAll = new String(chars);
-
-            // deleteById
-            chars = new char[12 + tl + wl];
-            index = 0;
-            "delete from ".getChars(0, 12, chars, index);
-            index += 12;
-            tableName.getChars(0, tl, chars, index);
-            index += tl;
-            whereId.getChars(0, wl, chars, index);
-            SQLQueryBuilder deleteById = new SQLQueryBuilder(chars);
-
-            store = new SQLStore(constructorMap, crud, autoKey, keyMethods, insertMethods, updateMethods, count, countById, select, selectById, insertAutoKey, insert, update, deleteAll, deleteById);
+            try {
+                store = new SQLStore(clazz.getConstructor(), crud, fieldSetMap, fieldGetMap, autoKey, keyMethods, insertMethods, updateMethods
+                        , buildCount(tableName)
+                        , buildCountById(tableName, whereId)
+                        , buildSelect(tableName, selectColumns)
+                        , buildSelectById(tableName, selectColumns, whereId)
+                        , buildInsertAutoKey(tableName, insertAutoKeyColumns, autoKeyValues)
+                        , buildInsert(tableName, insertColumns, values)
+                        , buildUpdate(tableName, updateSet, whereId)
+                        , buildDeleteAll(tableName)
+                        , buildDeleteById(tableName, whereId)
+                );
+            } catch (NoSuchMethodException e) {
+                throw new SQLQueryException(e.getMessage());
+            }
         } else {
-            store = new SQLStore(constructorMap);
+            Field[] fields = clazz.getDeclaredFields();
+            Map<String, FieldSetHandler> fieldSetMap = new HashMap<>(fields.length * 3);
+            Map<String, FieldSetHandler> fieldGetMap = new HashMap<>(fields.length);
+            Column column;
+            String columnName, fieldName;
+            String name;
+            FieldSetHandler fieldSetHandler;
+            for (Field field : fields) {
+                field.setAccessible(true);
+                column = field.getAnnotation(Column.class);
+                fieldName = field.getName();
+                columnName = column == null ? NamingStrategy.convert(field.getName()) : column.name();
+                name = columnName.replaceAll("`", "");
+                if (field.getType() == Object.class) {
+                    fieldSetHandler = (target, rs, index) -> field.set(target, rs.getObject(index));
+                } else {
+                    fieldSetHandler = (target, rs, index) -> field.set(target, rs.getObject(index, field.getType()));
+                }
+                fieldSetMap.put(fieldName, fieldSetHandler);
+                fieldSetMap.put(name, fieldSetHandler);
+                fieldSetMap.put(name.toUpperCase(), fieldSetHandler);
+                if (field.getAnnotation(Transient.class) != null) continue;
+            }
+            try {
+                store = new SQLStore(clazz.getConstructor(), fieldSetMap, fieldGetMap);
+            } catch (NoSuchMethodException e) {
+                throw new SQLQueryException(e.getMessage());
+            }
         }
-        entityMap.put(clazz, store);
+        sqlStoreCacheMap.put(clazz, store);
         return store;
+    }
+
+    private static String buildCount(String tableName) {
+        int tl = tableName.length();
+        char[] chars = new char[21 + tl];
+        int index = 0;
+        "select count(*) from ".getChars(0, 21, chars, index);
+        index += 21;
+        tableName.getChars(0, tl, chars, index);
+        return new String(chars);
+    }
+
+    private static SQLQueryBuilder buildCountById(String tableName, StringBuilder whereId) {
+        int tl = tableName.length();
+        int wl = whereId.length();
+        char[] chars = new char[21 + tl + wl];
+        int index = 0;
+        "select count(*) from ".getChars(0, 21, chars, index);
+        index += 21;
+        tableName.getChars(0, tl, chars, index);
+        index += tl;
+        whereId.getChars(0, wl, chars, index);
+        return new SQLQueryBuilder(chars);
+    }
+
+    private static String buildSelect(String tableName, StringBuilder selectColumns) {
+        int tl = tableName.length();
+        int scl = selectColumns.length();
+
+        char[] chars = new char[13 + tl + scl];
+        int index = 0;
+        "select ".getChars(0, 7, chars, index);
+        index += 7;
+        selectColumns.getChars(0, scl, chars, index);
+        index += scl;
+        " from ".getChars(0, 6, chars, index);
+        index += 6;
+        tableName.getChars(0, tl, chars, index);
+        return new String(chars);
+    }
+
+    private static SQLQueryBuilder buildSelectById(String tableName, StringBuilder selectColumns, StringBuilder whereId) {
+        int tl = tableName.length();
+        int scl = selectColumns.length();
+        int wl = whereId.length();
+
+        char[] chars = new char[13 + tl + scl + wl];
+        int index = 0;
+        "select ".getChars(0, 7, chars, index);
+        index += 7;
+        selectColumns.getChars(0, scl, chars, index);
+        index += scl;
+        " from ".getChars(0, 6, chars, index);
+        index += 6;
+        tableName.getChars(0, tl, chars, index);
+        index += tl;
+        whereId.getChars(0, wl, chars, index);
+        return new SQLQueryBuilder(chars);
+    }
+
+    private static SQLQueryBuilder buildInsert(String tableName, StringBuilder insertColumns, StringBuilder values) {
+        int tl = tableName.length();
+        int icl = insertColumns.length();
+        int vl = values.length();
+        char[] chars = new char[14 + tl + icl + vl];
+        int index = 0;
+        "insert into ".getChars(0, 12, chars, index);
+        index += 12;
+        tableName.getChars(0, tl, chars, index);
+        index += tl;
+        chars[index++] = '(';
+        insertColumns.getChars(0, icl, chars, index);
+        index += icl;
+        chars[index++] = ')';
+        values.getChars(0, vl, chars, index);
+        return new SQLQueryBuilder(chars);
+    }
+
+    private static SQLQueryBuilder buildInsertAutoKey(String tableName, StringBuilder insertAutoKeyColumns, StringBuilder autoKeyValues) {
+        int tl = tableName.length();
+        int iakcl = insertAutoKeyColumns.length();
+        int akvl = autoKeyValues.length();
+        char[] chars = new char[14 + tl + iakcl + akvl];
+        int index = 0;
+        "insert into ".getChars(0, 12, chars, index);
+        index += 12;
+        tableName.getChars(0, tl, chars, index);
+        index += tl;
+        chars[index++] = '(';
+        insertAutoKeyColumns.getChars(0, iakcl, chars, index);
+        index += iakcl;
+        chars[index++] = ')';
+        autoKeyValues.getChars(0, akvl, chars, index);
+        return new SQLQueryBuilder(chars);
+    }
+
+    private static SQLQueryBuilder buildUpdate(String tableName, StringBuilder updateSet, StringBuilder whereId) {
+        int tl = tableName.length();
+        int ul = updateSet.length();
+        int wl = whereId.length();
+
+        char[] chars = new char[12 + tl + ul + wl];
+        int index = 0;
+        "update ".getChars(0, 7, chars, index);
+        index += 7;
+        tableName.getChars(0, tl, chars, index);
+        index += tl;
+        " set ".getChars(0, 5, chars, index);
+        index += 5;
+        updateSet.getChars(0, ul, chars, index);
+        index += ul;
+        whereId.getChars(0, wl, chars, index);
+        return new SQLQueryBuilder(chars);
+    }
+
+    private static String buildDeleteAll(String tableName) {
+        int tl = tableName.length();
+        char[] chars = new char[12 + tl];
+        int index = 0;
+        "delete from ".getChars(0, 12, chars, index);
+        index += 12;
+        tableName.getChars(0, tl, chars, index);
+        return new String(chars);
+    }
+
+    private static SQLQueryBuilder buildDeleteById(String tableName, StringBuilder whereId) {
+        int tl = tableName.length();
+        int wl = whereId.length();
+        char[] chars = new char[12 + tl + wl];
+        int index = 0;
+        "delete from ".getChars(0, 12, chars, index);
+        index += 12;
+        tableName.getChars(0, tl, chars, index);
+        index += tl;
+        whereId.getChars(0, wl, chars, index);
+        return new SQLQueryBuilder(chars);
     }
 
     private static void appendValue(StringBuilder sb, String name) {
@@ -259,5 +359,28 @@ public interface SQLStoreFactory {
                 .append(':')
                 .append(name)
                 .append(',');
+    }
+
+    private static Object getDefaultValue(Field field, String columnDefinition) {
+        if (columnDefinition.length() == 0) {
+            return null;
+        }
+        String value = defaultValuePattern.matcher(columnDefinition).replaceAll("$1");
+        Class<?> clazz = field.getType();
+        if (Object.class == clazz || String.class == clazz) {
+            return value;
+        }
+        if (Integer.class == clazz) {
+            return Integer.valueOf(value);
+        }
+        if (Integer.class == clazz) {
+            return Integer.valueOf(value);
+        }
+        return value;
+    }
+
+    public static void main(String[] args) {
+        String columnDefinition = "vardad default aaaa";
+        System.out.println(defaultValuePattern.matcher(columnDefinition).replaceAll("$1"));
     }
 }

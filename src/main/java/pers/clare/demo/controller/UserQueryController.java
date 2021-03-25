@@ -8,73 +8,80 @@ import org.springframework.web.bind.annotation.RestController;
 import pers.clare.core.sqlquery.page.Page;
 import pers.clare.core.sqlquery.page.Pagination;
 import pers.clare.demo.data.entity.User;
-import pers.clare.demo.data.sql.SimpleUserRepository;
+import pers.clare.demo.data.sql.UserQueryRepository;
+import pers.clare.demo.vo.User2;
 
 import java.util.Collection;
 
 @RequestMapping("user/simple")
 @RestController
-public class SimpleUserController {
+public class UserQueryController {
 
     @Autowired
-    private SimpleUserRepository simpleUserRepository;
+    private UserQueryRepository userQueryRepository;
 
     @GetMapping("one/id")
     public Long findId(
     ) throws Exception {
-        return simpleUserRepository.findId();
+        return userQueryRepository.findId();
     }
 
     @GetMapping("one")
     public User find(
     ) throws Exception {
-        return simpleUserRepository.find();
+        return userQueryRepository.find();
+    }
+
+    @GetMapping("one2")
+    public User2 find2(
+    ) throws Exception {
+        return userQueryRepository.find2();
     }
 
     @GetMapping("map")
     public Collection findAllSimpleMap(
     ) throws Exception {
-        return simpleUserRepository.findAllSimpleMap();
+        return userQueryRepository.findAllSimpleMap();
     }
 
     @GetMapping("map/2")
     public Collection findAllSimpleMap(
             Pagination pagination
     ) throws Exception {
-        return simpleUserRepository.findAllMap(pagination);
+        return userQueryRepository.findAllMap(pagination);
     }
 
     @GetMapping
     public Collection findAllSimple(
     ) throws Exception {
-        return simpleUserRepository.findAllSimple();
+        return userQueryRepository.findAllSimple();
     }
 
     @GetMapping("id")
     public Collection findAllId(
             Pagination pagination
     ) throws Exception {
-        return simpleUserRepository.findAllId(pagination);
+        return userQueryRepository.findAllId(pagination);
     }
 
     @GetMapping("set")
     public Collection findAllSimpleSetMap(
     ) throws Exception {
-        return simpleUserRepository.findAllSimpleSetMap();
+        return userQueryRepository.findAllSimpleSetMap();
     }
 
     @GetMapping("time")
     public Collection findAllSimpleSetMapString(
             Pagination pagination
     ) throws Exception {
-        return simpleUserRepository.findAllTime(pagination);
+        return userQueryRepository.findAllTime(pagination);
     }
 
     @GetMapping("page/map")
     public Page mapPage(
             Pagination pagination
     ) throws Exception {
-        return simpleUserRepository.mapPage(pagination);
+        return userQueryRepository.mapPage(pagination);
     }
 
     @GetMapping("page")
@@ -85,7 +92,7 @@ public class SimpleUserController {
             , Long id
             , String name
     ) throws Exception {
-        return simpleUserRepository.page(
+        return userQueryRepository.page(
                 id == null ? "" : "and id = :id"
                 , StringUtils.isEmpty(name) ? "" : "and name like :name"
                 , pagination
@@ -102,14 +109,14 @@ public class SimpleUserController {
             , int page
             , int size
     ) throws Exception {
-        return simpleUserRepository.findAllSimple(name, page, size);
+        return userQueryRepository.findAllSimple(name, page, size);
     }
 
     @GetMapping("xml")
     public Collection findAllMapXML(
             Pagination pagination
     ) throws Exception {
-        return simpleUserRepository.findAllMapXML(pagination);
+        return userQueryRepository.findAllMapXML(pagination);
     }
 
     @GetMapping("page/xml")
@@ -120,7 +127,7 @@ public class SimpleUserController {
             , Long id
             , String name
     ) throws Exception {
-        return simpleUserRepository.pageMapXML(
+        return userQueryRepository.pageMapXML(
                 id == null ? "" : "and id = :id"
                 , StringUtils.isEmpty(name) ? "" : "and name like :name"
                 , pagination

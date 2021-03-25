@@ -317,6 +317,7 @@ public class SQLService {
             , Class<T> keyType
             , Object... parameters
     ) {
+        log.debug(sql);
         Connection connection = null;
         try {
             connection = getConnection(false);
@@ -341,6 +342,7 @@ public class SQLService {
             String sql
             , Object... parameters
     ) {
+        log.debug(sql);
         Connection connection = null;
         try {
             connection = getConnection(false);

@@ -3,12 +3,11 @@ package pers.clare.demo.controller;
 import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 import pers.clare.core.sqlquery.page.Pagination;
 import pers.clare.demo.data.entity.User;
 import pers.clare.demo.data.jpa.UserJpaRepository;
-import pers.clare.demo.data.sql.SimpleUserRepository;
+import pers.clare.demo.data.sql.UserQueryRepository;
 import pers.clare.demo.data.sql.UserRepository;
 import pers.clare.demo.service.UserService;
 
@@ -26,7 +25,7 @@ public class PerformanceController {
     @Autowired
     private UserRepository userRepository;
     @Autowired
-    private SimpleUserRepository simpleUserRepository;
+    private UserQueryRepository userQueryRepository;
 
     @Autowired
     private UserJpaRepository userJpaRepository;
@@ -40,7 +39,7 @@ public class PerformanceController {
             , @ApiParam(value = "數量", example = "100")
             @RequestParam(required = false, defaultValue = "100") final int max
     ) throws Exception {
-        return run(thread, max, (i) -> simpleUserRepository.findAll(Pagination.of(0, 20)));
+        return run(thread, max, (i) -> userQueryRepository.findAll(Pagination.of(0, 1)));
     }
 
     @GetMapping("sql/page/map")
@@ -50,7 +49,7 @@ public class PerformanceController {
             , @ApiParam(value = "數量", example = "100")
             @RequestParam(required = false, defaultValue = "100") final int max
     ) throws Exception {
-        return run(thread, max, (i) -> simpleUserRepository.findAllMap(Pagination.of(0, 20)));
+        return run(thread, max, (i) -> userQueryRepository.findAllMap(Pagination.of(0, 1)));
     }
 
     @GetMapping("jpa/page")

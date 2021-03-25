@@ -22,6 +22,8 @@ public class User {
 
     private String email;
 
+    private Integer count;
+
     private Boolean locked;
 
     private Boolean enabled;

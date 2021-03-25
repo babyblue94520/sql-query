@@ -3,8 +3,8 @@ package pers.clare.core.sqlquery;
 import lombok.extern.log4j.Log4j2;
 import pers.clare.core.sqlquery.page.Pagination;
 
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -18,29 +18,30 @@ public class SQLQuery {
 
     private final char[][] sqlParts;
 
-    private final Map<String, Integer> keyIndex;
+    private final Map<String, List<Integer>> keyIndex;
 
     final Object[] values;
 
-    SQLQuery(char[][] sqlParts, Map<String, Integer> keyIndex) {
+    SQLQuery(char[][] sqlParts, Map<String, List<Integer>> keyIndex) {
         this.sqlParts = sqlParts;
         this.keyIndex = keyIndex;
         this.values = new Object[sqlParts.length];
     }
 
-    public SQLQuery value(String key, Object value) {
-        if (key == null) return this;
-        Integer index = keyIndex.get(key);
-        if (index == null) return this;
-        values[index] = value == null ? NULL : value;
-        return this;
+    public SQLQuery value(String key, Object... value) {
+        return value(key, value);
     }
 
-    public SQLQuery value(String key, Object... value) {
+    public SQLQuery value(String key, Object value) {
         if (key == null) return this;
-        Integer index = keyIndex.get(key);
-        if (index == null) return this;
-        values[index] = value == null ? NULL : value;
+        List<Integer> list = keyIndex.get(key);
+        if (list == null || list.size() == 0) return this;
+        if (value == null) {
+            value = NULL;
+        }
+        for (Integer index : list) {
+            values[index] = value;
+        }
         return this;
     }
 

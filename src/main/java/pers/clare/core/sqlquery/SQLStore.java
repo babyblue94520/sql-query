@@ -1,9 +1,9 @@
 package pers.clare.core.sqlquery;
 
 
-
-
 import lombok.Getter;
+import pers.clare.core.sqlquery.function.FieldGetHandler;
+import pers.clare.core.sqlquery.function.FieldSetHandler;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -11,8 +11,10 @@ import java.util.*;
 
 @Getter
 public class SQLStore<T> {
-    Map<Integer, Constructor<T>> constructorMap;
+    Constructor<T> constructor;
     boolean crud = false;
+    Map<String, FieldSetHandler> fieldSetMap;
+    Map<String, FieldGetHandler> fieldGetMap;
     Field autoKey;
     Field[] keyFields;
     Field[] insertFields;
@@ -27,13 +29,20 @@ public class SQLStore<T> {
     String deleteAll;
     SQLQueryBuilder deleteById;
 
-    public SQLStore(Map<Integer, Constructor<T>> constructorMap) {
-        this.constructorMap = constructorMap;
+    public SQLStore(Constructor<T> constructor
+            , Map<String, FieldSetHandler> fieldSetMap
+            , Map<String, FieldGetHandler> fieldGetMap
+    ) {
+        this.constructor = constructor;
+        this.fieldSetMap = fieldSetMap;
+        this.fieldGetMap = fieldGetMap;
     }
 
     public SQLStore(
-            Map<Integer, Constructor<T>> constructorMap
+            Constructor<T> constructor
             , boolean crud
+            , Map<String, FieldSetHandler> fieldSetMap
+            , Map<String, FieldGetHandler> fieldGetMap
             , Field autoKey
             , Field[] keyFields
             , Field[] insertFields
@@ -48,8 +57,10 @@ public class SQLStore<T> {
             , String deleteAll
             , SQLQueryBuilder deleteById
     ) {
-        this.constructorMap = constructorMap;
+        this.constructor = constructor;
         this.crud = crud;
+        this.fieldSetMap = fieldSetMap;
+        this.fieldGetMap = fieldGetMap;
         this.autoKey = autoKey;
         this.keyFields = keyFields;
         this.insertFields = insertFields;

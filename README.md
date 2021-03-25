@@ -69,13 +69,10 @@ public class SQLQueryConfig {
     ```Java
     @Getter
     @Setter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Entity
     public class User {
     
         @Id
-        @GeneratedValue(strategy = GenerationType.IDENTITY)
+        @GeneratedValue
         private Long id;
     
         private String account;
@@ -187,8 +184,6 @@ public class SQLQueryConfig {
     
         ```java
         @Getter
-        @AllArgsConstructor
-        @NoArgsConstructor
         public class SimpleUser {
             private Long id;
             private String name;

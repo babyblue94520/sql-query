@@ -49,7 +49,7 @@ public class ResultSetUtil {
     }
 
     private static Map<String, Object> toMap(ResultSet rs, String[] names) throws SQLException {
-        Map<String, Object> map = new HashMap<>();
+        Map<String, Object> map = new HashMap<>(names.length);
         int i = 1;
         for (String name : names) {
             map.put(name, rs.getObject(i++));
@@ -58,7 +58,7 @@ public class ResultSetUtil {
     }
 
     private static <T> Map<String, T> toMap(Class<T> valueClass, ResultSet rs, String[] names) throws SQLException {
-        Map<String, T> map = new HashMap<>();
+        Map<String, T> map = new HashMap<>(names.length);
         int i = 1;
         for (String name : names) {
             map.put(name, rs.getObject(i++, valueClass));
