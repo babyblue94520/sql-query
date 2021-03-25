@@ -12,6 +12,9 @@ import java.util.Map;
 import java.util.Set;
 
 public interface SimpleUserRepository extends SQLRepository {
+    @Sql("select id from user")
+    Long findId();
+
     @Sql("select * from user")
     User find();
 
@@ -64,6 +67,14 @@ public interface SimpleUserRepository extends SQLRepository {
     /**
      * use name to get sql from XML
      */
-    @Sql(name = "findAllMapXML2")
-    List<Map<String, Object>> findAllMapXML2(Pagination pagination);
+    @Sql(name = "pageMapXML")
+    Page<User> pageMapXML(
+            String andId
+            , String andName
+            , Pagination pagination
+            , Long startTime
+            , Long endTime
+            , Long id
+            , String name
+    );
 }

@@ -21,8 +21,8 @@ public class SQLQueryConfig {
     @Primary
     @Bean(name = SQLStoreServiceName)
     public SQLStoreService sqlStoreService(
-            @Qualifier(DemoDataSourceConfig.DataSourceName) DataSource write
-            , @Qualifier(SlaveDataSourceConfig.DataSourceName) DataSource read
+            @Qualifier(DemoDataSourceConfig.DataSourceName) DataSource write // 讀寫資料庫連線
+            , @Qualifier(SlaveDataSourceConfig.DataSourceName) DataSource read // 唯讀資料庫連線，沒有則不用配置
     ) {
         return new SQLStoreService(write, read);
     }

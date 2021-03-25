@@ -14,7 +14,7 @@ public interface SQLCrudRepository<T> extends SQLRepository {
 
     long count(T entity);
 
-    long countById(Object... ids);
+    long countById(Object... keys);
 
     List<T> findAll();
 
@@ -24,7 +24,7 @@ public interface SQLCrudRepository<T> extends SQLRepository {
 
     T find(T entity);
 
-    T findById(Object... ids);
+    T findById(Object... keys);
 
     T insert(T entity);
 
@@ -32,7 +32,7 @@ public interface SQLCrudRepository<T> extends SQLRepository {
 
     int delete(T entity);
 
-    int deleteById(Object... ids);
+    int deleteById(Object... keys);
 
     int deleteAll();
 }

@@ -19,6 +19,12 @@ public class SimpleUserController {
     @Autowired
     private SimpleUserRepository simpleUserRepository;
 
+    @GetMapping("one/id")
+    public Long findId(
+    ) throws Exception {
+        return simpleUserRepository.findId();
+    }
+
     @GetMapping("one")
     public User find(
     ) throws Exception {
@@ -106,10 +112,22 @@ public class SimpleUserController {
         return simpleUserRepository.findAllMapXML(pagination);
     }
 
-    @GetMapping("xml2")
-    public Collection findAllMapXML2(
+    @GetMapping("page/xml")
+    public Page<User> pageMapXML(
             Pagination pagination
+            , Long startTime
+            , Long endTime
+            , Long id
+            , String name
     ) throws Exception {
-        return simpleUserRepository.findAllMapXML2(pagination);
+        return simpleUserRepository.pageMapXML(
+                id == null ? "" : "and id = :id"
+                , StringUtils.isEmpty(name) ? "" : "and name like :name"
+                , pagination
+                , startTime
+                , endTime
+                , id
+                , name
+        );
     }
 }
