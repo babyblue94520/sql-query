@@ -12,7 +12,7 @@ import java.lang.reflect.Type;
 import java.util.List;
 
 public class SQLCrudRepositoryImpl<T> implements SQLCrudRepository<T> {
-    private final SQLStore<T> sqlStore;
+    private final SQLCrudStore<T> sqlStore;
     private final SQLStoreService sqlStoreService;
 
     public SQLCrudRepositoryImpl(Class<T> repositoryClass, SQLStoreService sqlStoreService) {
@@ -26,7 +26,7 @@ public class SQLCrudRepositoryImpl<T> implements SQLCrudRepository<T> {
         if (types == null || types.length == 0) {
             throw new IllegalArgumentException("Repository entity class must not be null!");
         }
-        sqlStore = SQLStoreFactory.build((Class<T>) types[0], true);
+        sqlStore = (SQLCrudStore<T>) SQLStoreFactory.build((Class<T>) types[0], true);
     }
 
     public long count() {
@@ -122,24 +122,14 @@ public class SQLCrudRepositoryImpl<T> implements SQLCrudRepository<T> {
             T entity
     ) {
         try {
-            if (sqlStore.autoKey == null) {
-                sqlStoreService.update(SQLUtil.setValue(sqlStore.insert, sqlStore.insertFields, entity));
+            String sql = toInsertSQL(sqlStore, entity);
+            Field autoKey = sqlStore.autoKey;
+            if (autoKey == null) {
+                sqlStoreService.update(sql);
             } else {
-                Object keyValue = sqlStore.autoKey.get(entity);
-                String sql;
-                if (keyValue == null) {
-                    sql = SQLUtil.setValue(sqlStore.insert, sqlStore.insertFields, entity);
-                } else {
-                    SQLQuery sqlQuery = sqlStore.insertAutoKey.build();
-                    sqlQuery.value(sqlStore.autoKey.getName(), keyValue);
-                    for (Field f : sqlStore.insertFields) {
-                        sqlQuery.value(f.getName(), f.get(entity));
-                    }
-                    sql = sqlQuery.toString();
-                }
-                Object key = sqlStoreService.insert(sql, sqlStore.autoKey.getType());
+                Object key = sqlStoreService.insert(sql, autoKey.getType());
                 if (key != null) {
-                    sqlStore.autoKey.set(entity, key);
+                    autoKey.set(entity, key);
                 }
             }
             return entity;
@@ -151,7 +141,11 @@ public class SQLCrudRepositoryImpl<T> implements SQLCrudRepository<T> {
     public int update(
             T entity
     ) {
-        return sqlStoreService.update(SQLUtil.setValue2(sqlStore.update, sqlStore.updateFields, sqlStore.keyFields, entity));
+        try {
+            return sqlStoreService.update(toUpdateSQL(sqlStore, entity));
+        } catch (IllegalAccessException e) {
+            throw new SQLQueryException(e.getMessage(), e);
+        }
     }
 
     public int delete(
@@ -170,4 +164,62 @@ public class SQLCrudRepositoryImpl<T> implements SQLCrudRepository<T> {
         return sqlStoreService.update(sqlStore.deleteAll);
     }
 
+    private static String toInsertSQL(SQLCrudStore sqlStore, Object entity) throws IllegalAccessException {
+        FieldColumn[] fieldColumns = sqlStore.fieldColumns;
+        StringBuilder columns = new StringBuilder("insert into " + sqlStore.tableName + "(");
+        StringBuilder values = new StringBuilder("values(");
+        Object value;
+        for (FieldColumn fieldColumn : fieldColumns) {
+            if (fieldColumn == null || !fieldColumn.isInsertable()) continue;
+            value = fieldColumn.getField().get(entity);
+            if (value == null) {
+                if (fieldColumn.isAuto()) continue;
+                if (!fieldColumn.isNullable()) continue;
+            }
+            columns.append(fieldColumn.getColumnName())
+                    .append(',');
+
+            SQLUtil.appendValue(values, value);
+            values.append(',');
+        }
+        values.deleteCharAt(values.length() - 1).append(')');
+        columns.deleteCharAt(columns.length() - 1)
+                .append(')')
+                .append(values);
+        return columns.toString();
+    }
+
+    private static String toUpdateSQL(SQLCrudStore sqlStore, Object entity) throws IllegalAccessException {
+        FieldColumn[] fieldColumns = sqlStore.fieldColumns;
+        StringBuilder values = new StringBuilder("update " + sqlStore.tableName + " set ");
+        StringBuilder wheres = new StringBuilder(" where ");
+        Object value;
+        for (FieldColumn fieldColumn : fieldColumns) {
+            if (fieldColumn == null) continue;
+            value = fieldColumn.getField().get(entity);
+            if (fieldColumn.isId()) {
+                if (value == null) {
+                    wheres.append(fieldColumn.getColumnName())
+                            .append(" is null");
+                } else {
+                    wheres.append(fieldColumn.getColumnName())
+                            .append('=');
+                    SQLUtil.appendValue(wheres, value);
+                }
+                wheres.append(" and ");
+            } else {
+                if (!fieldColumn.isUpdatable()) continue;
+                if (value == null && !fieldColumn.isNullable()) continue;
+
+                values.append(fieldColumn.getColumnName())
+                        .append('=');
+                SQLUtil.appendValue(values, value);
+                values.append(',');
+            }
+        }
+        wheres.delete(wheres.length() - 5, wheres.length() - 1);
+        values.deleteCharAt(values.length() - 1)
+                .append(wheres);
+        return values.toString();
+    }
 }

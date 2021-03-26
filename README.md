@@ -412,4 +412,49 @@ public class SQLQueryConfig {
         </SQL>
         ```
 
-* **Transaction**
+* **@SqlConnectionReuse**
+
+    * 不同的方法使用同一個連線，使用到 **User-Defined Variables** 時，就需要在同一個連線下，才能取得值
+    
+        ```java
+        public interface TransactionRepository extends SQLRepository {
+        
+            // mysql
+            @Sql("update user set name = if(@name:=name,:name,:name) where id=:id")
+            int updateName(Long id, String name);
+        
+            @Sql("select @name")
+            String getOldName();
+        }
+      
+        public class Service{
+            
+            @SqlConnectionReuse
+            public String queryDefineValue(Long id, String name) {
+                transactionRepository.updateName(id, name);
+                return String.format("old name:%s , new name:%s", transactionRepository.getOldName(), name);
+            }
+      
+        }
+        ```
+      
+    * **Transaction**
+    
+        ```java
+        @SqlConnectionReuse(transaction = true)
+        public void transaction(StringBuffer result, Long id, String name, int count) {
+            multiUpdate(result, id, name, count);
+        }
+        ```
+    * **Isolation**
+
+      ```java
+      import java.sql.Connection;
+
+      @SqlConnectionReuse(isolation = Connection.TRANSACTION_READ_UNCOMMITTED)
+      public void transaction(StringBuffer result, Long id, String name, int count) {
+          multiUpdate(result, id, name, count);
+      }
+      ```
+}
+

@@ -61,7 +61,7 @@ public class SQLStoreService extends SQLService {
 
     private <T, R> R queryHandler(
             Boolean readonly
-            , SQLStore<T> sqlStore
+            , SQLCrudStore<T> sqlStore
             , T entity
             , StoreResultSetHandler<T, R> storeResultSetHandler
     ) {
@@ -81,7 +81,7 @@ public class SQLStoreService extends SQLService {
     private <T, R> R doQueryHandler(
             Connection connection
             , Boolean readonly
-            , SQLStore<T> sqlStore
+            , SQLCrudStore<T> sqlStore
             , T entity
             , StoreResultSetHandler<T, R> storeResultSetHandler
     ) throws Exception {
@@ -109,7 +109,7 @@ public class SQLStoreService extends SQLService {
     }
 
     public <T> T find(
-            SQLStore<T> store
+            SQLCrudStore<T> store
             , T entity
     ) {
         return queryHandler(false, store, entity, this::findHandler);
@@ -117,7 +117,7 @@ public class SQLStoreService extends SQLService {
 
     public <T> T find(
             boolean readonly
-            , SQLStore<T> sqlStore
+            , SQLCrudStore<T> sqlStore
             , T entity
     ) {
         return queryHandler(readonly, sqlStore, entity, this::findHandler);

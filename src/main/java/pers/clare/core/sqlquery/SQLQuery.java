@@ -77,74 +77,15 @@ public class SQLQuery {
         } else {
             Class<?> valueClass = value.getClass();
             if (valueClass.isArray() || Collection.class.isAssignableFrom(valueClass)) {
-                appendInValue(sb, value);
+                SQLUtil.appendInValue(sb, value);
                 sb.deleteCharAt(sb.length() - 1);
             } else {
-                appendValue(sb, value);
+                SQLUtil.appendValue(sb, value);
             }
         }
     }
 
-    private static void appendValue(
-            StringBuilder sb
-            , Object value
-    ) {
-        if (value instanceof String) {
-            sb.append('\'');
-            char[] cs = ((String) value).toCharArray();
-            for (char c : cs) {
-                sb.append(c);
-                if (c == '\'') sb.append('\'');
-            }
-            sb.append('\'');
-        } else {
-            sb.append(value);
-        }
-    }
 
-    /**
-     * appendIn
-     * 依陣列數量，動態產生 (?,?,?,?) or ((?,?),(?,?))
-     *
-     * @param sb
-     * @param value
-     */
-    private static void appendInValue(
-            StringBuilder sb
-            , Object value
-    ) {
-        Class<?> valueClass = value.getClass();
-        if (valueClass.isArray()) {
-            sb.append('(');
-            if (value instanceof Object[]) {
-                Object[] vs = (Object[]) value;
-                if (vs.length == 0) throw new IllegalArgumentException("SQL WHERE IN doesn't empty value");
-                for (Object v : vs) appendInValue(sb, v);
-            } else if (value instanceof int[]) {
-                int[] vs = (int[]) value;
-                if (vs.length == 0) throw new IllegalArgumentException("SQL WHERE IN doesn't empty value");
-                for (int v : vs) appendInValue(sb, v);
-            } else if (value instanceof long[]) {
-                long[] vs = (long[]) value;
-                if (vs.length == 0) throw new IllegalArgumentException("SQL WHERE IN doesn't empty value");
-                for (long v : vs) appendInValue(sb, v);
-            } else if (value instanceof char[]) {
-                char[] vs = (char[]) value;
-                if (vs.length == 0) throw new IllegalArgumentException("SQL WHERE IN doesn't empty value");
-                for (char v : vs) appendInValue(sb, v);
-            }
-            sb.deleteCharAt(sb.length() - 1).append(')');
-        } else if (Collection.class.isAssignableFrom(valueClass)) {
-            Collection<Object> vs = (Collection<Object>) value;
-            if (vs.size() == 0) throw new IllegalArgumentException("SQL WHERE IN doesn't empty value");
-            sb.append('(');
-            for (Object v : vs) appendInValue(sb, v);
-            sb.deleteCharAt(sb.length() - 1).append(')');
-        } else {
-            appendValue(sb, value);
-        }
-        sb.append(',');
-    }
 
     public static void main(String[] args) {
         test(new Integer[]{1});
