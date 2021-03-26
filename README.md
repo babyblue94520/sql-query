@@ -189,7 +189,7 @@ public class SQLQueryConfig {
             private String name;
         }
 
-        public interface SimpleUserRepository extends SQLRepository {
+        public interface UserQueryRepository extends SQLRepository {
             @Sql("select id from user")
             Long findId();
         
@@ -263,67 +263,67 @@ public class SQLQueryConfig {
         ```java
         @RequestMapping("user/simple")
         @RestController
-        public class SimpleUserController {
+        public class UserQueryController {
         
             @Autowired
-            private SimpleUserRepository simpleUserRepository;
+            private UserQueryRepository userQueryRepository;
         
             @GetMapping("one/id")
             public Long findId(
             ) throws Exception {
-                return simpleUserRepository.findId();
+                return userQueryRepository.findId();
             }
         
             @GetMapping("one")
             public User find(
             ) throws Exception {
-                return simpleUserRepository.find();
+                return userQueryRepository.find();
             }
         
             @GetMapping("map")
             public Collection findAllSimpleMap(
             ) throws Exception {
-                return simpleUserRepository.findAllSimpleMap();
+                return userQueryRepository.findAllSimpleMap();
             }
         
             @GetMapping("map/2")
             public Collection findAllSimpleMap(
                     Pagination pagination
             ) throws Exception {
-                return simpleUserRepository.findAllMap(pagination);
+                return userQueryRepository.findAllMap(pagination);
             }
         
             @GetMapping
             public Collection findAllSimple(
             ) throws Exception {
-                return simpleUserRepository.findAllSimple();
+                return userQueryRepository.findAllSimple();
             }
         
             @GetMapping("id")
             public Collection findAllId(
                     Pagination pagination
             ) throws Exception {
-                return simpleUserRepository.findAllId(pagination);
+                return userQueryRepository.findAllId(pagination);
             }
         
             @GetMapping("set")
             public Collection findAllSimpleSetMap(
             ) throws Exception {
-                return simpleUserRepository.findAllSimpleSetMap();
+                return userQueryRepository.findAllSimpleSetMap();
             }
         
             @GetMapping("time")
             public Collection findAllSimpleSetMapString(
                     Pagination pagination
             ) throws Exception {
-                return simpleUserRepository.findAllTime(pagination);
+                return userQueryRepository.findAllTime(pagination);
             }
         
             @GetMapping("page/map")
             public Page mapPage(
                     Pagination pagination
             ) throws Exception {
-                return simpleUserRepository.mapPage(pagination);
+                return userQueryRepository.mapPage(pagination);
             }
         
             @GetMapping("page")
@@ -334,7 +334,7 @@ public class SQLQueryConfig {
                     , Long id
                     , String name
             ) throws Exception {
-                return simpleUserRepository.page(
+                return userQueryRepository.page(
                         id == null ? "" : "and id = :id"
                         , StringUtils.isEmpty(name) ? "" : "and name like :name"
                         , pagination
@@ -351,14 +351,14 @@ public class SQLQueryConfig {
                     , int page
                     , int size
             ) throws Exception {
-                return simpleUserRepository.findAllSimple(name, page, size);
+                return userQueryRepository.findAllSimple(name, page, size);
             }
         
             @GetMapping("xml")
             public Collection findAllMapXML(
                     Pagination pagination
             ) throws Exception {
-                return simpleUserRepository.findAllMapXML(pagination);
+                return userQueryRepository.findAllMapXML(pagination);
             }
         
             @GetMapping("page/xml")
@@ -369,7 +369,7 @@ public class SQLQueryConfig {
                     , Long id
                     , String name
             ) throws Exception {
-                return simpleUserRepository.pageMapXML(
+                return userQueryRepository.pageMapXML(
                         id == null ? "" : "and id = :id"
                         , StringUtils.isEmpty(name) ? "" : "and name like :name"
                         , pagination
@@ -390,7 +390,7 @@ public class SQLQueryConfig {
     * 依照 **Method Name** or **@Sql(name=...)** 載入對應的標籤名稱
     * 方便複雜的 **SQL** 排版
       
-        ex: resources\sqlquery\pers\clare\demo\data\sql\SimpleUserRepository.xml
+        ex: resources\sqlquery\pers\clare\demo\data\sql\UserQueryRepository.xml
 
         ```xml
         <?xml version="1.0" encoding="UTF-8"?>
@@ -414,8 +414,10 @@ public class SQLQueryConfig {
 
 * **@SqlConnectionReuse**
 
-    * 不同的方法使用同一個連線，使用到 **User-Defined Variables** 時，就需要在同一個連線下，才能取得值
+  呼叫不同的方法時，綁定同一條連線，使用到 **User-Defined Variables** 或 開啟 **Transaction** 時，就需要使用相同連線，**@SqlConnectionReuse** 相同配置的方法，會自動使用上層的連線，不同則建立新連線
     
+    * **Same connection**
+      
         ```java
         public interface TransactionRepository extends SQLRepository {
         
@@ -439,14 +441,19 @@ public class SQLQueryConfig {
         ```
       
     * **Transaction**
-    
+        
+        * 第一層的 **@SqlConnectionReuse** 的方法結束後，自動執行 **commit** ，發生任何例外則 **rollback**
+
         ```java
         @SqlConnectionReuse(transaction = true)
         public void transaction(StringBuffer result, Long id, String name, int count) {
             multiUpdate(result, id, name, count);
         }
         ```
+
     * **Isolation**
+
+        * 使用不同的 **Isolation** 則會建立新連線
 
       ```java
       import java.sql.Connection;
@@ -456,5 +463,53 @@ public class SQLQueryConfig {
           multiUpdate(result, id, name, count);
       }
       ```
+
+        **Rollback example**
+    
+        ```java
+        public String rollback(Long id, String name) {
+            StringBuilder sb = new StringBuilder();
+            try {
+                proxy().updateException(sb, id, name);
+            } catch (Exception e) {
+                sb.append(e.getMessage()).append('\n');
+            }
+            sb.append(userRepository.findById(id)).append('\n');
+            return sb.toString();
+        }
+        
+        @SqlConnectionReuse(transaction = true)
+        public void updateException(StringBuilder sb, Long id, String name) {
+            String result = queryDefineValue(id, name);
+            sb.append(result).append('\n');
+            sb.append("------some connection------").append('\n');
+            User user = userRepository.findById(id);
+            sb.append(user).append('\n');
+        
+            result = queryDefineValue(id, name+2);
+            sb.append(result).append('\n');
+        
+            sb.append("------uncommitted------").append('\n');
+            user = proxy().findByIdUncommitted(id);
+            sb.append(user).append('\n');
+        
+            sb.append("------committed------").append('\n');
+            user = proxy().findById(id);
+            sb.append(user).append('\n');
+            throw new RuntimeException("rollback");
+        }
+        
+        @SqlConnectionReuse
+        public User findById(Long id) {
+            return userRepository.findById(id);
+        }
+        
+        @SqlConnectionReuse(isolation = Connection.TRANSACTION_READ_UNCOMMITTED)
+        public User findByIdUncommitted(Long id) {
+            return userRepository.findById(id);
+        }
+        ```
+    
+        ![](image/rollback.png)
 }
 

@@ -63,6 +63,14 @@ public class ConnectionReuseController {
         return sb.toString();
     }
 
+    @GetMapping("transaction/rollback")
+    public String rollback(
+            long id
+            , String name
+    ) {
+        return connectionReuseService.rollback(id, name);
+    }
+
     private void run(int thread, Callable<Object> task) throws InterruptedException, ExecutionException {
         ExecutorService executors = Executors.newFixedThreadPool(thread);
         List<Callable<Object>> tasks = new ArrayList<>();
