@@ -18,7 +18,6 @@ public class ConnectionReuseService {
     @Autowired
     private TransactionRepository transactionRepository;
 
-
     /**
      * use the some connection in different methods
      */
