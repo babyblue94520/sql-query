@@ -480,22 +480,31 @@ public class SQLQueryConfig {
         
         @SqlConnectionReuse(transaction = true)
         public void updateException(StringBuilder sb, Long id, String name) {
+        
+            // first update user name
             String result = queryDefineValue(id, name);
             sb.append(result).append('\n');
             sb.append("------some connection------").append('\n');
+            
+            // select user in same connection
             User user = userRepository.findById(id);
             sb.append(user).append('\n');
         
+            // second update user name
             result = queryDefineValue(id, name+2);
             sb.append(result).append('\n');
         
+            // select uncommitted user in different connection
             sb.append("------uncommitted------").append('\n');
             user = proxy().findByIdUncommitted(id);
             sb.append(user).append('\n');
         
+            // select committed user in different connection
             sb.append("------committed------").append('\n');
             user = proxy().findById(id);
             sb.append(user).append('\n');
+            
+            // rollback
             throw new RuntimeException("rollback");
         }
         
