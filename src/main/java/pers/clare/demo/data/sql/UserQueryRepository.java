@@ -1,5 +1,6 @@
 package pers.clare.demo.data.sql;
 
+import org.springframework.stereotype.Repository;
 import pers.clare.core.sqlquery.annotation.Sql;
 import pers.clare.core.sqlquery.page.Page;
 import pers.clare.core.sqlquery.page.Pagination;

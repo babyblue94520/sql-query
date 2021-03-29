@@ -56,7 +56,7 @@ public class SQLScanner implements BeanDefinitionRegistryPostProcessor, Initiali
             processPropertyPlaceHolders();
         }
 
-        ClassPathSQLScanner scanner = new ClassPathSQLScanner(beanDefinitionRegistry);
+        SQLRepositoryScanner scanner = new SQLRepositoryScanner(beanDefinitionRegistry);
         scanner.setAnnotationAttributes(this.annotationAttributes);
         scanner.setResourceLoader(this.applicationContext);
         scanner.registerFilters();

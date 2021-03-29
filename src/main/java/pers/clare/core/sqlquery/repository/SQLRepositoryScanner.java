@@ -12,29 +12,29 @@ import org.springframework.beans.factory.support.GenericBeanDefinition;
 import org.springframework.context.annotation.AnnotationConfigUtils;
 import org.springframework.context.annotation.ClassPathBeanDefinitionScanner;
 import org.springframework.core.annotation.AnnotationAttributes;
-import org.springframework.data.repository.util.ClassUtils;
+import org.springframework.core.type.classreading.MetadataReader;
+import org.springframework.core.type.classreading.MetadataReaderFactory;
+import org.springframework.core.type.filter.AnnotationTypeFilter;
+import org.springframework.core.type.filter.AssignableTypeFilter;
+//import org.springframework.data.repository.NoRepositoryBean;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Set;
 
 @Log4j2
 @Setter
 @Getter
-public class ClassPathSQLScanner extends ClassPathBeanDefinitionScanner {
+public class SQLRepositoryScanner extends ClassPathBeanDefinitionScanner {
     private AnnotationAttributes annotationAttributes;
 
-    public ClassPathSQLScanner(BeanDefinitionRegistry registry) {
+    public SQLRepositoryScanner(BeanDefinitionRegistry registry) {
         super(registry);
     }
 
     public void registerFilters() {
-        // default include filter that accepts all classes
-        addIncludeFilter((metadataReader, metadataReaderFactory) -> true);
-        // exclude package-info.java
-        addExcludeFilter((metadataReader, metadataReaderFactory) -> {
-            String className = metadataReader.getClassMetadata().getClassName();
-            return className.endsWith("package-info");
-        });
+        addIncludeFilter(new InterfaceTypeFilter(SQLRepository.class));
+//        addExcludeFilter(new AnnotationTypeFilter(NoRepositoryBean.class));
     }
 
     @Override
@@ -42,7 +42,7 @@ public class ClassPathSQLScanner extends ClassPathBeanDefinitionScanner {
         Set<BeanDefinitionHolder> beanDefinitions = super.doScan(basePackages);
 
         if (beanDefinitions.isEmpty()) {
-            log.warn("No SQLStore was found in '{}' package. Please check your configuration.", Arrays.toString(basePackages));
+            log.warn("No SQLRepository was found in '{}' package. Please check your configuration.", Arrays.toString(basePackages));
         } else {
             processBeanDefinitions(beanDefinitions);
         }
@@ -52,16 +52,7 @@ public class ClassPathSQLScanner extends ClassPathBeanDefinitionScanner {
 
     @Override
     protected boolean isCandidateComponent(AnnotatedBeanDefinition beanDefinition) {
-        if (beanDefinition.getMetadata().getInterfaceNames().length == 0) {
-            return false;
-        }
-        for (String interfaceName : beanDefinition.getMetadata().getInterfaceNames()) {
-            if (!(SQLRepository.class.getName().equals(interfaceName)
-                    || SQLCrudRepository.class.getName().equals(interfaceName))) {
-                return false;
-            }
-        }
-        boolean isNonRepositoryInterface = !ClassUtils.isGenericRepositoryInterface(beanDefinition.getBeanClassName());
+        boolean isNonRepositoryInterface = !SQLRepository.class.getName().equals(beanDefinition.getBeanClassName());
         boolean isTopLevelType = !beanDefinition.getMetadata().hasEnclosingClass();
         return isNonRepositoryInterface && isTopLevelType;
     }
@@ -92,7 +83,21 @@ public class ClassPathSQLScanner extends ClassPathBeanDefinitionScanner {
                 definition.getConstructorArgumentValues().addGenericArgumentValue(annotationAttributes);
                 definition.setBeanClass(factoryBeanClass);
                 definition.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
+
             }
+        }
+    }
+
+    private static class InterfaceTypeFilter extends AssignableTypeFilter {
+        public InterfaceTypeFilter(Class<?> targetType) {
+            super(targetType);
+        }
+
+        @Override
+        public boolean match(MetadataReader metadataReader, MetadataReaderFactory metadataReaderFactory)
+                throws IOException {
+
+            return metadataReader.getClassMetadata().isInterface() && super.match(metadataReader, metadataReaderFactory);
         }
     }
 }

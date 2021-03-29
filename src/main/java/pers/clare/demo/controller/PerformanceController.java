@@ -2,11 +2,9 @@ package pers.clare.demo.controller;
 
 import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.*;
 import pers.clare.core.sqlquery.page.Pagination;
 import pers.clare.demo.data.entity.User;
-import pers.clare.demo.data.jpa.UserJpaRepository;
 import pers.clare.demo.data.sql.UserQueryRepository;
 import pers.clare.demo.data.sql.UserRepository;
 import pers.clare.demo.service.UserService;
@@ -27,8 +25,6 @@ public class PerformanceController {
     @Autowired
     private UserQueryRepository userQueryRepository;
 
-    @Autowired
-    private UserJpaRepository userJpaRepository;
     @Autowired
     private UserService userService;
 
@@ -52,17 +48,6 @@ public class PerformanceController {
         return run(thread, max, (i) -> userQueryRepository.findAllMap(Pagination.of(0, 1)));
     }
 
-    @GetMapping("jpa/page")
-    public String page2(
-            @ApiParam(value = "執行緒數量", example = "8")
-            @RequestParam(required = false, defaultValue = "8") final int thread
-            , @ApiParam(value = "數量", example = "100")
-            @RequestParam(required = false, defaultValue = "100") final int max
-    ) throws Exception {
-        long t = System.currentTimeMillis();
-        return run(thread, max, (i) -> userJpaRepository.findAll(PageRequest.of(0, 20)));
-    }
-
     @GetMapping("sql/insert")
     public String insert(
             @ApiParam(value = "執行緒數量", example = "8")
@@ -73,29 +58,6 @@ public class PerformanceController {
         return run(thread, max, (i) -> userService.insert(User.builder()
                 .account(Thread.currentThread().getName() + i)
                 .name(Thread.currentThread().getName())
-                .build()
-        ));
-    }
-
-    @GetMapping("jpa/insert")
-    public String insert2(
-            @ApiParam(value = "執行緒數量", example = "8")
-            @RequestParam(required = false, defaultValue = "8") final int thread
-            , @ApiParam(value = "數量", example = "100")
-            @RequestParam(required = false, defaultValue = "100") final int max
-    ) throws Exception {
-        long t = System.currentTimeMillis();
-        return run(thread, max, (i) -> userJpaRepository.insert(User.builder()
-                .account(Thread.currentThread().getName() + i)
-                .name(Thread.currentThread().getName())
-                .email("")
-                .count(0)
-                .locked(false)
-                .enabled(true)
-                .updateTime(t)
-                .updateUser(1L)
-                .createTime(t)
-                .createUser(1L)
                 .build()
         ));
     }

@@ -18,11 +18,12 @@ spring:
       maximum-pool-size: 200
       idle-timeout: 300000
       max-lifetime: 1200000
+#    schema: classpath:sql/schema_h2.sql
   jpa:
     show-sql: false
     database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: none
     generate-ddl: true
   h2:
     console:

@@ -1,13 +1,11 @@
 package pers.clare.core.sqlquery.repository;
 
-import org.springframework.data.repository.NoRepositoryBean;
 import pers.clare.core.sqlquery.page.Next;
 import pers.clare.core.sqlquery.page.Page;
 import pers.clare.core.sqlquery.page.Pagination;
 
 import java.util.List;
 
-@NoRepositoryBean
 public interface SQLCrudRepository<T> extends SQLRepository {
 
     long count();

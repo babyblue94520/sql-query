@@ -1,33 +1,18 @@
 package pers.clare.demo.data;
 
 
-import pers.clare.core.data.repository.ExtendedRepositoryImpl;
 import com.zaxxer.hikari.HikariDataSource;
-import org.springframework.beans.factory.FactoryBean;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.jdbc.DataSourceBuilder;
-import org.springframework.boot.orm.jpa.EntityManagerFactoryBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.orm.jpa.JpaTransactionManager;
-import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
-import org.springframework.transaction.PlatformTransactionManager;
 
-import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
 
 @Configuration(DemoDataSourceConfig.BeanName)
-@EnableJpaRepositories(
-        entityManagerFactoryRef = DemoDataSourceConfig.EntityManagerFactoryName
-        , transactionManagerRef = DemoDataSourceConfig.TransactionManagerName
-        , basePackages = {DemoDataSourceConfig.BasePackages}
-        , repositoryBaseClass = ExtendedRepositoryImpl.class
-)
 public class DemoDataSourceConfig {
     public static final String Prefix = "demo";
     public static final String BasePackages = "pers.clare." + Prefix + ".data.jpa";
@@ -57,26 +42,5 @@ public class DemoDataSourceConfig {
     @Bean(name = JdbcTemplateName)
     public JdbcTemplate jdbcTemplate(@Qualifier(DataSourceName) DataSource dataSource) {
         return new JdbcTemplate(dataSource);
-    }
-
-    @Primary
-    @Bean(name = EntityManagerFactoryName)
-    public LocalContainerEntityManagerFactoryBean entityManagerFactory(
-            EntityManagerFactoryBuilder entityManagerFactoryBuilder
-            , @Qualifier(DataSourceName) DataSource dataSource
-    ) {
-        return entityManagerFactoryBuilder.dataSource(dataSource)
-                .packages(EntityPackages)
-                .persistenceUnit(PersistenceUnitName)
-                .build();
-    }
-
-    @Primary
-    @Bean(name = TransactionManagerName)
-    @Autowired
-    public PlatformTransactionManager transactionManager(
-            @Qualifier(EntityManagerFactoryName) FactoryBean<EntityManagerFactory> entityManagerFactory
-    ) throws Exception {
-        return new JpaTransactionManager(entityManagerFactory.getObject());
     }
 }

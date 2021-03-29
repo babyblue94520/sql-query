@@ -52,7 +52,6 @@ public class SQLRepositoryFactory implements BeanClassLoaderAware, BeanFactoryAw
         if (log.isDebugEnabled()) {
             log.debug("Finished creation of repository instance for {}.", repositoryInterface.getName());
         }
-
         return repository;
     }
 }
