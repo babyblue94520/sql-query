@@ -1,7 +1,7 @@
 package pers.clare.core.sqlquery.method;
 
 import org.aopalliance.intercept.MethodInterceptor;
-import pers.clare.core.sqlquery.MethodUtil;
+import pers.clare.core.sqlquery.util.MethodUtil;
 import pers.clare.core.sqlquery.SQLInjector;
 import pers.clare.core.sqlquery.SQLStoreFactory;
 import pers.clare.core.sqlquery.SQLStoreService;

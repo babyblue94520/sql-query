@@ -1,4 +1,4 @@
-package pers.clare.core.sqlquery;
+package pers.clare.core.sqlquery.util;
 
 import java.sql.*;
 import java.util.*;

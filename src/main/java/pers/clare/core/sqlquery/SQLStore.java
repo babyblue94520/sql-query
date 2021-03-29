@@ -9,8 +9,8 @@ import java.util.*;
 
 @Getter
 public class SQLStore<T> {
-    Constructor<T> constructor;
-    Map<String, FieldSetHandler> fieldSetMap;
+    private Constructor<T> constructor;
+    private Map<String, FieldSetHandler> fieldSetMap;
 
     public SQLStore(Constructor<T> constructor
             , Map<String, FieldSetHandler> fieldSetMap

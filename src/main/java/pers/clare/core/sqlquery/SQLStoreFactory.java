@@ -66,7 +66,7 @@ public class SQLStoreFactory {
     }
 
     private static <T> SQLCrudStore<T> buildCrud(Class<T> clazz) {
-        String tableName = NamingStrategy.convert(clazz.getSimpleName());
+        String tableName = NamingStrategy.turnCamelCase(clazz.getSimpleName());
         StringBuilder selectColumns = new StringBuilder();
         StringBuilder whereId = new StringBuilder(" where ");
         Field[] fields = clazz.getDeclaredFields();
@@ -230,6 +230,6 @@ public class SQLStoreFactory {
     }
 
     private static String getColumnName(Field field, Column column) {
-        return column == null || column.name().length() == 0 ? NamingStrategy.convert(field.getName()) : column.name();
+        return column == null || column.name().length() == 0 ? NamingStrategy.turnCamelCase(field.getName()) : column.name();
     }
 }

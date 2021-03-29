@@ -4,6 +4,7 @@ import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 import pers.clare.core.sqlquery.*;
 import pers.clare.core.sqlquery.page.Pagination;
+import pers.clare.core.sqlquery.util.SQLUtil;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;

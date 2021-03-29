@@ -2,6 +2,7 @@ package pers.clare.core.sqlquery;
 
 import lombok.extern.log4j.Log4j2;
 import pers.clare.core.sqlquery.page.Pagination;
+import pers.clare.core.sqlquery.util.SQLUtil;
 
 import java.util.Collection;
 import java.util.List;

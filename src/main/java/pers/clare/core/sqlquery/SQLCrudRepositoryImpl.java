@@ -5,6 +5,7 @@ import pers.clare.core.sqlquery.page.Next;
 import pers.clare.core.sqlquery.page.Page;
 import pers.clare.core.sqlquery.page.Pagination;
 import pers.clare.core.sqlquery.repository.SQLCrudRepository;
+import pers.clare.core.sqlquery.util.SQLUtil;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;

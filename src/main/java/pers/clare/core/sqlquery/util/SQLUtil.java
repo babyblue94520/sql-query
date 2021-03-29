@@ -1,8 +1,12 @@
-package pers.clare.core.sqlquery;
+package pers.clare.core.sqlquery.util;
 
+import pers.clare.core.sqlquery.SQLQuery;
+import pers.clare.core.sqlquery.SQLQueryBuilder;
+import pers.clare.core.sqlquery.SQLStore;
 import pers.clare.core.sqlquery.exception.SQLQueryException;
 import pers.clare.core.sqlquery.function.FieldGetHandler;
 import pers.clare.core.sqlquery.function.FieldSetHandler;
+import pers.clare.core.sqlquery.naming.NamingStrategy;
 import pers.clare.core.sqlquery.page.Pagination;
 
 import java.lang.reflect.Constructor;
@@ -36,8 +40,8 @@ public class SQLUtil {
         if (sorts != null) {
             sql.append(" order by ");
             for (String sort : sorts) {
-                sql.append(sort)
-                        .append(',');
+                NamingStrategy.turnCamelCase(sql, sort);
+                sql.append(',');
             }
             sql.delete(sql.length() - 1, sql.length());
         }
@@ -129,12 +133,6 @@ public class SQLUtil {
         }
     }
 
-    public static <T> String setValue(SQLQueryBuilder sqlQueryBuilder, Map<String, FieldGetHandler> fields, T entity) {
-        SQLQuery sqlQuery = sqlQueryBuilder.build();
-        setValue(sqlQuery, fields, entity);
-        return sqlQuery.toString();
-    }
-
     public static <T> void setValue(SQLQuery sqlQuery, Map<String, FieldGetHandler> fields, T entity) {
         try {
             for (Map.Entry<String, FieldGetHandler> entry : fields.entrySet()) {
@@ -145,43 +143,28 @@ public class SQLUtil {
         }
     }
 
-    public static <T> String setValue2(SQLQueryBuilder sqlQueryBuilder, Field[] fields, Field[] keyFields, T entity) {
-        try {
-            SQLQuery sqlQuery = sqlQueryBuilder.build();
-            for (Field f : fields) {
-                sqlQuery.value(f.getName(), f.get(entity));
-            }
-            for (Field f : keyFields) {
-                sqlQuery.value(f.getName(), f.get(entity));
-            }
-            return sqlQuery.toString();
-        } catch (Exception e) {
-            throw new SQLQueryException(e.getMessage(), e);
-        }
-    }
-
     public static <T> T toInstance(SQLStore<T> sqlStore, ResultSet rs) throws Exception {
-        FieldSetHandler[] fields = toFields(sqlStore.fieldSetMap, rs.getMetaData());
+        FieldSetHandler[] fields = toFields(sqlStore.getFieldSetMap(), rs.getMetaData());
         if (rs.next()) {
-            return buildInstance(sqlStore.constructor, fields, rs);
+            return buildInstance(sqlStore.getConstructor(), fields, rs);
         }
         return null;
     }
 
     public static <T> Set<T> toSetInstance(SQLStore<T> sqlStore, ResultSet rs) throws Exception {
         Set<T> result = new HashSet<>();
-        FieldSetHandler[] fields = toFields(sqlStore.fieldSetMap, rs.getMetaData());
+        FieldSetHandler[] fields = toFields(sqlStore.getFieldSetMap(), rs.getMetaData());
         while (rs.next()) {
-            result.add(buildInstance(sqlStore.constructor, fields, rs));
+            result.add(buildInstance(sqlStore.getConstructor(), fields, rs));
         }
         return result;
     }
 
     public static <T> List<T> toInstances(SQLStore<T> sqlStore, ResultSet rs) throws Exception {
         List<T> list = new ArrayList<>();
-        FieldSetHandler[] fields = toFields(sqlStore.fieldSetMap, rs.getMetaData());
+        FieldSetHandler[] fields = toFields(sqlStore.getFieldSetMap(), rs.getMetaData());
         while (rs.next()) {
-            list.add(buildInstance(sqlStore.constructor, fields, rs));
+            list.add(buildInstance(sqlStore.getConstructor(), fields, rs));
         }
         return list;
     }
