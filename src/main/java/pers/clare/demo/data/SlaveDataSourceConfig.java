@@ -2,12 +2,10 @@ package pers.clare.demo.data;
 
 
 import com.zaxxer.hikari.HikariDataSource;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.jdbc.core.JdbcTemplate;
 
 import javax.sql.DataSource;
 
@@ -26,10 +24,5 @@ public class SlaveDataSourceConfig {
         return DataSourceBuilder.create()
                 .type(HikariDataSource.class)
                 .build();
-    }
-
-    @Bean(name = JdbcTemplateName)
-    public JdbcTemplate jdbcTemplate(@Qualifier(DataSourceName) DataSource dataSource) {
-        return new JdbcTemplate(dataSource);
     }
 }
