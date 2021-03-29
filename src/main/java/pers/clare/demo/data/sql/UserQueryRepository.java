@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+@Repository
 public interface UserQueryRepository extends SQLRepository {
     @Sql("select id from user")
     Long findId();

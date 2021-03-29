@@ -33,7 +33,6 @@ public class SQLQueryConfig {
     **預設方法**
     
     ```java
-    @NoRepositoryBean
     public interface SQLCrudRepository<T> extends SQLRepository {
     
         long count();
@@ -98,6 +97,7 @@ public class SQLQueryConfig {
         private Long createUser;
     }
 
+    @Repository
     public interface UserRepository extends SQLCrudRepository<User> {
     
     }
@@ -114,6 +114,7 @@ public class SQLQueryConfig {
           **Repository**
     
           ```java
+          @Repository
           public interface QueryRepository extends SQLRepository {
               @Sql(query = "select * from table where column1 = :value1 and column2 = :value2")
               List query(String value1, String value2);
@@ -147,6 +148,7 @@ public class SQLQueryConfig {
           **Repository**
     
             ```java
+            @Repository
             public interface QueryRepository extends SQLRepository {
                 @Sql(query = "select * from table where 1=1 {and1} {and2}")
                 List query(String and1, String and2, String value1, String value2);
@@ -189,6 +191,7 @@ public class SQLQueryConfig {
             private String name;
         }
 
+        @Repository
         public interface UserQueryRepository extends SQLRepository {
             @Sql("select id from user")
             Long findId();
@@ -419,6 +422,7 @@ public class SQLQueryConfig {
     * **Same connection**
       
         ```java
+        @Repository
         public interface TransactionRepository extends SQLRepository {
         
             // mysql
