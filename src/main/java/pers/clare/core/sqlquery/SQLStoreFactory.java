@@ -50,7 +50,10 @@ public class SQLStoreFactory {
         Map<String, FieldSetHandler> fieldSetMap = new HashMap<>(fields.length * 3);
         String name;
         FieldSetHandler fieldSetHandler;
+        int modifier;
         for (Field field : fields) {
+            modifier = field.getModifiers();
+            if (Modifier.isStatic(modifier) || Modifier.isFinal(modifier)) continue;
             field.setAccessible(true);
             name = getColumnName(field, field.getAnnotation(Column.class)).replaceAll("`", "");
             fieldSetHandler = buildSetHandler(field);
@@ -82,7 +85,10 @@ public class SQLStoreFactory {
         Field autoKey = null;
         FieldSetHandler fieldSetHandler;
         boolean nullable, insertable, updatable;
+        int modifier;
         for (Field field : fields) {
+            modifier = field.getModifiers();
+            if (Modifier.isStatic(modifier) || Modifier.isFinal(modifier)) continue;
             field.setAccessible(true);
             column = field.getAnnotation(Column.class);
             fieldName = field.getName();
