@@ -9,19 +9,19 @@ public class Pagination {
         return new Pagination(page, size);
     }
 
-    public static Pagination of(Integer page, Integer size, String[] sorts) {
+    public static Pagination of(Integer page, Integer size, String... sorts) {
         return new Pagination(page, size, sorts);
     }
 
     public Pagination() {
-        this(0, 20, null);
+        this(0, 20,  null);
     }
 
     public Pagination(Integer page, Integer size) {
         this(page, size, null);
     }
 
-    public Pagination(Integer page, Integer size, String[] sorts) {
+    public Pagination(Integer page, Integer size, String... sorts) {
         this.page = page;
         this.size = size;
         this.sorts = sorts;
@@ -31,23 +31,15 @@ public class Pagination {
         return page;
     }
 
-    public void setPage(Integer page) {
-        this.page = page;
-    }
-
     public Integer getSize() {
         return size;
-    }
-
-    public void setSize(Integer size) {
-        this.size = size;
     }
 
     public String[] getSorts() {
         return sorts;
     }
 
-    public void setSorts(String[] sorts) {
-        this.sorts = sorts;
+    public Pagination next() {
+        return Pagination.of(page + 1, size, sorts);
     }
 }

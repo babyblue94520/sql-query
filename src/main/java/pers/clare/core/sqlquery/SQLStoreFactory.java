@@ -3,7 +3,7 @@ package pers.clare.core.sqlquery;
 import pers.clare.core.sqlquery.exception.SQLQueryException;
 import pers.clare.core.sqlquery.function.FieldSetHandler;
 import pers.clare.core.sqlquery.naming.NamingStrategy;
-import pers.clare.util.Asserts;
+import pers.clare.core.util.Asserts;
 
 import javax.persistence.Column;
 import javax.persistence.GeneratedValue;

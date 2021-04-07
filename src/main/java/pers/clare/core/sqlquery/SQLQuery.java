@@ -2,6 +2,7 @@ package pers.clare.core.sqlquery;
 
 import lombok.extern.log4j.Log4j2;
 import pers.clare.core.sqlquery.page.Pagination;
+import pers.clare.core.sqlquery.page.Sort;
 import pers.clare.core.sqlquery.util.SQLUtil;
 
 import java.util.Collection;
@@ -48,10 +49,26 @@ public class SQLQuery {
 
     @Override
     public String toString() {
-        return toString(null);
+        return toSQL().toString();
     }
 
     public String toString(Pagination pagination) {
+        StringBuilder sql = toSQL();
+        if (pagination != null) {
+            SQLUtil.appendPaginationSQL(sql, pagination);
+        }
+        return sql.toString();
+    }
+
+    public String toString(Sort sort) {
+        StringBuilder sql = toSQL();
+        if (sort != null) {
+            SQLUtil.appendSortSQL(sql, sort.getSorts());
+        }
+        return sql.toString();
+    }
+
+    private StringBuilder toSQL() {
         StringBuilder sb = new StringBuilder();
         char[] cs;
         for (int i = 0, l = sqlParts.length; i < l; i++) {
@@ -62,10 +79,7 @@ public class SQLQuery {
                 sb.append(cs);
             }
         }
-        if (pagination != null) {
-            SQLUtil.buildPaginationSQL(pagination, sb);
-        }
-        return sb.toString();
+        return sb;
     }
 
     private static void append(
@@ -85,7 +99,6 @@ public class SQLQuery {
             }
         }
     }
-
 
 
     public static void main(String[] args) {

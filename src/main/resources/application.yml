@@ -2,8 +2,8 @@
 spring:
   profiles:
     include:
-      - h2
-#      - mysql
+#      - h2
+      - mysql
     active: dev
   data:
     redis:
@@ -43,6 +43,6 @@ management:
   info:
     git:
       mode: full
-logging:
-  level:
-    pers.clare: debug
+#logging:
+#  level:
+#    pers.clare: debug

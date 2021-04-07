@@ -98,7 +98,7 @@ public abstract class SQLMethod implements MethodInterceptor {
                     if (index == paginationIndex) continue;
                     arguments[index++] = argument;
                 }
-                return doInvoke(SQLUtil.buildPaginationSQL(pagination, sql), arguments);
+                return doInvoke(SQLUtil.appendPaginationSQL(pagination, sql), arguments);
             }
         }
     }

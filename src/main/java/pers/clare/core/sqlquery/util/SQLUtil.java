@@ -25,18 +25,27 @@ public class SQLUtil {
         return "select count(*) from(" + sql + ")t";
     }
 
-    public static String buildPaginationSQL(
+    public static String appendPaginationSQL(
             Pagination pagination
             , String sql
     ) {
-        return buildPaginationSQL(pagination, new StringBuilder(sql));
+        StringBuilder paginationSql = new StringBuilder(sql);
+        appendPaginationSQL(paginationSql, pagination);
+        return paginationSql.toString();
     }
 
-    public static String buildPaginationSQL(
-            Pagination pagination
-            , StringBuilder sql
+    public static void appendPaginationSQL(
+            StringBuilder sql
+            , Pagination pagination
     ) {
-        String[] sorts = pagination.getSorts();
+        appendSortSQL(sql, pagination.getSorts());
+        sql.append(" limit ")
+                .append(pagination.getSize() * pagination.getPage())
+                .append(',')
+                .append(pagination.getSize());
+    }
+
+    public static void appendSortSQL(StringBuilder sql, String[] sorts) {
         if (sorts != null) {
             sql.append(" order by ");
             for (String sort : sorts) {
@@ -45,11 +54,6 @@ public class SQLUtil {
             }
             sql.delete(sql.length() - 1, sql.length());
         }
-        sql.append(" limit ")
-                .append(pagination.getSize() * pagination.getPage())
-                .append(',')
-                .append(pagination.getSize());
-        return sql.toString();
     }
 
     public static void appendValue(
