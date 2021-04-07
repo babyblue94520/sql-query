@@ -1,4 +1,4 @@
-package pers.clare.util;
+package pers.clare.core.util;
 
 public interface Asserts {
     static void notNull(Object value , String message,Object ...args){
