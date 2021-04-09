@@ -195,9 +195,40 @@ public class SQLStoreService extends SQLService {
         Connection connection = null;
         try {
             connection = getConnection(readonly);
-            List<T> list = SQLUtil.toInstances(sqlStore, go(connection, SQLUtil.appendPaginationSQL(pagination, sql), parameters));
+            List<T> list = SQLUtil.toInstances(sqlStore, go(connection, SQLUtil.buildPaginationSQL(pagination, sql), parameters));
             long total = list.size();
             if (total == pagination.getSize()) total = getTotal(connection, sql, parameters);
+            return Page.of(pagination.getPage(), pagination.getSize(), list, total);
+        } catch (SQLQueryException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new SQLQueryException(e.getMessage(), e);
+        } finally {
+            close(connection);
+        }
+    }
+
+
+    public <T> Page<T> page(
+            boolean readonly
+            , SQLCrudStore<T> sqlStore
+            , Pagination pagination
+            , Object... parameters
+    ) {
+        Connection connection = null;
+        try {
+            connection = getConnection(readonly);
+            List<T> list = SQLUtil.toInstances(sqlStore, go(connection, SQLUtil.buildPaginationSQL(pagination, sqlStore.select), parameters));
+            long total = list.size();
+            if (total == pagination.getSize()) {
+                log.debug(sqlStore.count);
+                ResultSet rs = connection.createStatement().executeQuery(sqlStore.count);
+                if (rs.next()) {
+                    total = rs.getLong(1);
+                } else {
+                    throw new SQLQueryException("query total error");
+                }
+            }
             return Page.of(pagination.getPage(), pagination.getSize(), list, total);
         } catch (SQLQueryException e) {
             throw e;

@@ -25,16 +25,16 @@ public class SQLUtil {
         return "select count(*) from(" + sql + ")t";
     }
 
-    public static String appendPaginationSQL(
+    public static String buildPaginationSQL(
             Pagination pagination
             , String sql
     ) {
         StringBuilder paginationSql = new StringBuilder(sql);
-        appendPaginationSQL(paginationSql, pagination);
+        buildPaginationSQL(paginationSql, pagination);
         return paginationSql.toString();
     }
 
-    public static void appendPaginationSQL(
+    public static void buildPaginationSQL(
             StringBuilder sql
             , Pagination pagination
     ) {

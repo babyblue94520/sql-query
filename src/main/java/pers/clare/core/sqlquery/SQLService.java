@@ -269,7 +269,7 @@ public class SQLService {
         Connection connection = null;
         try {
             connection = getConnection(readonly);
-            List<T> list = ResultSetUtil.toList(clazz, go(connection, SQLUtil.appendPaginationSQL(pagination, sql), parameters));
+            List<T> list = ResultSetUtil.toList(clazz, go(connection, SQLUtil.buildPaginationSQL(pagination, sql), parameters));
             long total = list.size();
             if (total == pagination.getSize()) total = getTotal(connection, sql, parameters);
             return Page.of(pagination.getPage(), pagination.getSize(), list, total);
@@ -301,7 +301,7 @@ public class SQLService {
         Connection connection = null;
         try {
             connection = getConnection(readonly);
-            List<Map<String, T>> list = ResultSetUtil.toMapList(clazz, go(connection, SQLUtil.appendPaginationSQL(pagination, sql), parameters));
+            List<Map<String, T>> list = ResultSetUtil.toMapList(clazz, go(connection, SQLUtil.buildPaginationSQL(pagination, sql), parameters));
             long total = list.size();
             if (total == pagination.getSize()) total = getTotal(connection, sql, parameters);
             return Page.of(pagination.getPage(), pagination.getSize(), list, total);

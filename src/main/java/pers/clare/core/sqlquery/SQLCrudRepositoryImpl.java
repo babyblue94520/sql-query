@@ -80,7 +80,8 @@ public class SQLCrudRepositoryImpl<T> implements SQLCrudRepository<T> {
 
     @Override
     public Page<T> page(Pagination pagination) {
-        return sqlStoreService.page(sqlStore, sqlStore.select, pagination);
+
+        return sqlStoreService.page(false, sqlStore, pagination);
     }
 
     @Override
