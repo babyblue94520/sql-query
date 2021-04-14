@@ -1,6 +1,7 @@
 package pers.clare.core.sqlquery.method;
 
 import org.aopalliance.intercept.MethodInterceptor;
+import pers.clare.core.sqlquery.page.Sort;
 import pers.clare.core.sqlquery.util.MethodUtil;
 import pers.clare.core.sqlquery.SQLInjector;
 import pers.clare.core.sqlquery.SQLStoreFactory;
@@ -30,8 +31,12 @@ public class SQLMethodFactory {
         Map<Method, MethodInterceptor> methodInterceptors = new HashMap<>();
         String command;
         SQLMethod sqlMethod;
+        Class<?>[] parameterTypes;
         for (Method method : methods) {
-            command = getCommand(contents, method);
+            command = findSqlCommand(contents, method);
+            if (command == null) {
+                throw new SQLQueryException(String.format("%s.%s method must set XML or Sql.query", repositoryInterface.getName(), method.getName()));
+            }
             sqlMethod = buildMethod(method, command);
             if (sqlMethod == null) {
                 throw new SQLQueryException(String.format("%s not support return type", method.getName()));
@@ -39,7 +44,16 @@ public class SQLMethodFactory {
             sqlMethod.setMethod(method);
             sqlMethod.setSql(command);
             sqlMethod.setSqlStoreService(sqlStoreService);
-            sqlMethod.setPaginationIndex(paginationIndexOf(method.getParameterTypes()));
+            parameterTypes = method.getParameterTypes();
+            for (int i = 0, l = method.getParameterTypes().length; i < l; i++) {
+                if (parameterTypes[i] == Pagination.class) {
+                    sqlMethod.setPaginationIndex(i);
+                    break;
+                } else if (parameterTypes[i] == Sort.class) {
+                    sqlMethod.setSortIndex(i);
+                    break;
+                }
+            }
             methodInterceptors.put(method, sqlMethod);
         }
         return methodInterceptors;
@@ -114,7 +128,7 @@ public class SQLMethodFactory {
     private static SQLMethod buildPage(Method method) {
         Class<?> valueType = MethodUtil.getReturnClass(method, 0);
         if (valueType == null || valueType == Map.class) {
-            valueType = getParameterMapValueClass(method,null);
+            valueType = getParameterMapValueClass(method, null);
             return new BasicTypeMapPage(valueType);
         } else {
             if (SQLStoreFactory.isIgnore(valueType)) {
@@ -123,6 +137,12 @@ public class SQLMethodFactory {
                 return new SQLEntityPage(valueType);
             }
         }
+    }
+
+    private static int sortIndexOf(Class<?>[] parameterTypes) {
+        for (int i = 0; i < parameterTypes.length; i++)
+            if (parameterTypes[i] == Sort.class) return i;
+        return -1;
     }
 
     private static int paginationIndexOf(Class<?>[] parameterTypes) {
@@ -134,7 +154,7 @@ public class SQLMethodFactory {
     /**
      * get sql string
      */
-    private static String getCommand(
+    private static String findSqlCommand(
             Map<String, String> contents
             , Method method
     ) {
@@ -146,8 +166,6 @@ public class SQLMethodFactory {
                 if (command == null) command = sql.value();
             }
         }
-        if (command == null)
-            throw new SQLQueryException(String.format("%s method must set XML or Sql.query", method.getName()));
         return command;
     }
 

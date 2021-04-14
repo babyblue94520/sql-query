@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import pers.clare.core.sqlquery.page.Page;
 import pers.clare.core.sqlquery.page.Pagination;
+import pers.clare.core.sqlquery.page.Sort;
 import pers.clare.demo.data.entity.User;
 import pers.clare.demo.data.sql.UserRepository;
 
@@ -20,6 +21,13 @@ public class UserController {
     public List<User> all(
     ) throws Exception {
         return userRepository.findAll();
+    }
+
+    @GetMapping("sort")
+    public List<User> all(
+            Sort sort
+    ) throws Exception {
+        return userRepository.findAll(sort);
     }
 
     @GetMapping("page")

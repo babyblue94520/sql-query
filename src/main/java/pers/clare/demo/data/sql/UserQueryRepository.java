@@ -4,6 +4,7 @@ import org.springframework.stereotype.Repository;
 import pers.clare.core.sqlquery.annotation.Sql;
 import pers.clare.core.sqlquery.page.Page;
 import pers.clare.core.sqlquery.page.Pagination;
+import pers.clare.core.sqlquery.page.Sort;
 import pers.clare.core.sqlquery.repository.SQLRepository;
 import pers.clare.demo.data.entity.User;
 import pers.clare.demo.vo.SimpleUser;
@@ -38,6 +39,9 @@ public interface UserQueryRepository extends SQLRepository {
 
     @Sql("select id from user")
     List<Long> findAllId(Pagination pagination);
+
+    @Sql("select * from user")
+    List<User> findAllId(Sort sort);
 
     @Sql("select id,name from user limit 0,10")
     Set findAllSimpleSetMap();

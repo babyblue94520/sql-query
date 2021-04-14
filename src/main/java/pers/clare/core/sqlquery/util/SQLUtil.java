@@ -8,6 +8,7 @@ import pers.clare.core.sqlquery.function.FieldGetHandler;
 import pers.clare.core.sqlquery.function.FieldSetHandler;
 import pers.clare.core.sqlquery.naming.NamingStrategy;
 import pers.clare.core.sqlquery.page.Pagination;
+import pers.clare.core.sqlquery.page.Sort;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -29,12 +30,21 @@ public class SQLUtil {
             Pagination pagination
             , String sql
     ) {
-        StringBuilder paginationSql = new StringBuilder(sql);
-        buildPaginationSQL(paginationSql, pagination);
-        return paginationSql.toString();
+        StringBuilder sb = new StringBuilder(sql);
+        appendPaginationSQL(sb, pagination);
+        return sb.toString();
     }
 
-    public static void buildPaginationSQL(
+    public static String buildSortSQL(
+            Sort sort
+            , String sql
+    ) {
+        StringBuilder sb = new StringBuilder(sql);
+        appendSortSQL(sb, sort.getSorts());
+        return sb.toString();
+    }
+
+    public static void appendPaginationSQL(
             StringBuilder sql
             , Pagination pagination
     ) {
@@ -46,14 +56,14 @@ public class SQLUtil {
     }
 
     public static void appendSortSQL(StringBuilder sql, String[] sorts) {
-        if (sorts != null) {
-            sql.append(" order by ");
-            for (String sort : sorts) {
-                NamingStrategy.turnCamelCase(sql, sort);
-                sql.append(',');
-            }
-            sql.delete(sql.length() - 1, sql.length());
+        if (sorts == null) return;
+        sql.append(" order by ");
+        for (String sort : sorts) {
+            if (sort == null || sort.length() == 0) continue;
+            NamingStrategy.sortTurnCamelCase(sql, sort);
+            sql.append(',');
         }
+        sql.delete(sql.length() - 1, sql.length());
     }
 
     public static void appendValue(
@@ -133,7 +143,7 @@ public class SQLUtil {
             }
             return sqlQuery.toString();
         } catch (Exception e) {
-            throw new SQLQueryException(e.getMessage(), e);
+            throw new SQLQueryException(e);
         }
     }
 
@@ -143,7 +153,7 @@ public class SQLUtil {
                 sqlQuery.value(entry.getKey(), entry.getValue().apply(entity));
             }
         } catch (Exception e) {
-            throw new SQLQueryException(e.getMessage(), e);
+            throw new SQLQueryException(e);
         }
     }
 
@@ -187,7 +197,7 @@ public class SQLUtil {
         int l = metaData.getColumnCount();
         FieldSetHandler[] fields = new FieldSetHandler[l];
         for (int i = 0; i < l; i++) {
-            fields[i] = fieldMap.get(metaData.getColumnName(i + 1));
+            fields[i] = fieldMap.get(metaData.getColumnLabel(i + 1));
         }
         return fields;
     }

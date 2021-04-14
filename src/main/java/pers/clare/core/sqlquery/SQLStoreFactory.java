@@ -2,6 +2,7 @@ package pers.clare.core.sqlquery;
 
 import pers.clare.core.sqlquery.exception.SQLQueryException;
 import pers.clare.core.sqlquery.function.FieldSetHandler;
+import pers.clare.core.sqlquery.function.ResultSetValueConverter;
 import pers.clare.core.sqlquery.naming.NamingStrategy;
 import pers.clare.core.util.Asserts;
 
@@ -13,10 +14,15 @@ import java.lang.reflect.*;
 import java.util.*;
 
 public class SQLStoreFactory {
+    static Map<Class<?>, ResultSetValueConverter> resultSetValueConverterMap = new HashMap<>();
 
     static Map<Class<?>, SQLStore<?>> sqlStoreCacheMap = new HashMap<>();
 
     SQLStoreFactory() {
+    }
+
+    public static void registerResultSetValueConverter(Class<?> clazz, ResultSetValueConverter resultSetValueConverter) {
+        resultSetValueConverterMap.put(clazz, resultSetValueConverter);
     }
 
     public static <T> SQLStore<T> find(Class<T> clazz) {
@@ -228,10 +234,15 @@ public class SQLStoreFactory {
     }
 
     private static FieldSetHandler buildSetHandler(Field field) {
-        if (field.getType() == Object.class) {
-            return (target, rs, index) -> field.set(target, rs.getObject(index));
+        ResultSetValueConverter resultSetValueConverter = resultSetValueConverterMap.get(field.getType());
+        if (resultSetValueConverter == null) {
+            if (field.getType() == Object.class) {
+                return (target, rs, index) -> field.set(target, rs.getObject(index));
+            } else {
+                return (target, rs, index) -> field.set(target, rs.getObject(index, field.getType()));
+            }
         } else {
-            return (target, rs, index) -> field.set(target, rs.getObject(index, field.getType()));
+            return (target, rs, index) -> field.set(target, resultSetValueConverter.apply(rs.getObject(index)));
         }
     }
 

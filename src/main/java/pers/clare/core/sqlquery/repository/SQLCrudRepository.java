@@ -3,6 +3,7 @@ package pers.clare.core.sqlquery.repository;
 import pers.clare.core.sqlquery.page.Next;
 import pers.clare.core.sqlquery.page.Page;
 import pers.clare.core.sqlquery.page.Pagination;
+import pers.clare.core.sqlquery.page.Sort;
 
 import java.util.List;
 
@@ -15,6 +16,8 @@ public interface SQLCrudRepository<T> extends SQLRepository {
     long countById(Object... keys);
 
     List<T> findAll();
+
+    List<T> findAll(Sort sort);
 
     Page<T> page(Pagination pagination);
 

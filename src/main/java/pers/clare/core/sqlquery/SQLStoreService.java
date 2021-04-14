@@ -38,7 +38,7 @@ public class SQLStoreService extends SQLService {
         } catch (SQLQueryException e) {
             throw e;
         } catch (Exception e) {
-            throw new SQLQueryException(e.getMessage(), e);
+            throw new SQLQueryException(e);
         } finally {
             close(connection);
         }
@@ -73,7 +73,7 @@ public class SQLStoreService extends SQLService {
         } catch (SQLQueryException e) {
             throw e;
         } catch (Exception e) {
-            throw new SQLQueryException(e.getMessage(), e);
+            throw new SQLQueryException(e);
         } finally {
             close(connection);
         }
@@ -196,13 +196,11 @@ public class SQLStoreService extends SQLService {
         try {
             connection = getConnection(readonly);
             List<T> list = SQLUtil.toInstances(sqlStore, go(connection, SQLUtil.buildPaginationSQL(pagination, sql), parameters));
-            long total = list.size();
-            if (total == pagination.getSize()) total = getTotal(connection, sql, parameters);
-            return Page.of(pagination.getPage(), pagination.getSize(), list, total);
+            return toPage(pagination, list, connection, sql, parameters);
         } catch (SQLQueryException e) {
             throw e;
         } catch (Exception e) {
-            throw new SQLQueryException(e.getMessage(), e);
+            throw new SQLQueryException(e);
         } finally {
             close(connection);
         }
@@ -220,9 +218,10 @@ public class SQLStoreService extends SQLService {
             connection = getConnection(readonly);
             List<T> list = SQLUtil.toInstances(sqlStore, go(connection, SQLUtil.buildPaginationSQL(pagination, sqlStore.select), parameters));
             long total = list.size();
-            if (total == pagination.getSize()) {
-                log.debug(sqlStore.count);
-                ResultSet rs = connection.createStatement().executeQuery(sqlStore.count);
+            if (total < pagination.getSize()) {
+                total += pagination.getPage() * pagination.getSize();
+            } else {
+                ResultSet rs = go(connection, sqlStore.count, parameters);
                 if (rs.next()) {
                     total = rs.getLong(1);
                 } else {
@@ -233,9 +232,10 @@ public class SQLStoreService extends SQLService {
         } catch (SQLQueryException e) {
             throw e;
         } catch (Exception e) {
-            throw new SQLQueryException(e.getMessage(), e);
+            throw new SQLQueryException(e);
         } finally {
             close(connection);
         }
     }
+
 }

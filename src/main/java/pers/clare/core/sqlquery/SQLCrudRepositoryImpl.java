@@ -4,6 +4,7 @@ import pers.clare.core.sqlquery.exception.SQLQueryException;
 import pers.clare.core.sqlquery.page.Next;
 import pers.clare.core.sqlquery.page.Page;
 import pers.clare.core.sqlquery.page.Pagination;
+import pers.clare.core.sqlquery.page.Sort;
 import pers.clare.core.sqlquery.repository.SQLCrudRepository;
 import pers.clare.core.sqlquery.util.SQLUtil;
 
@@ -53,7 +54,7 @@ public class SQLCrudRepositoryImpl<T> implements SQLCrudRepository<T> {
             Long count = sqlStoreService.findFirst(readonly, Long.class, SQLUtil.setValue(sqlStore.countById, sqlStore.keyFields, entity));
             return count == null ? 0 : count;
         } catch (Exception e) {
-            throw new SQLQueryException(e.getMessage(), e);
+            throw new SQLQueryException(e);
         }
     }
 
@@ -69,7 +70,7 @@ public class SQLCrudRepositoryImpl<T> implements SQLCrudRepository<T> {
             Long count = sqlStoreService.findFirst(readonly, Long.class, SQLUtil.setValue(sqlStore.countById, sqlStore.keyFields, ids));
             return count == null ? 0 : count;
         } catch (Exception e) {
-            throw new SQLQueryException(e.getMessage(), e);
+            throw new SQLQueryException(e);
         }
     }
 
@@ -78,9 +79,14 @@ public class SQLCrudRepositoryImpl<T> implements SQLCrudRepository<T> {
         return findAll(false);
     }
 
+    public List<T> findAll(
+            Sort sort
+    ) {
+        return sqlStoreService.findAll(false, sqlStore, SQLUtil.buildSortSQL(sort, sqlStore.select));
+    }
+
     @Override
     public Page<T> page(Pagination pagination) {
-
         return sqlStoreService.page(false, sqlStore, pagination);
     }
 
@@ -136,7 +142,7 @@ public class SQLCrudRepositoryImpl<T> implements SQLCrudRepository<T> {
             }
             return entity;
         } catch (IllegalAccessException e) {
-            throw new SQLQueryException(e.getMessage(), e);
+            throw new SQLQueryException(e);
         }
     }
 
@@ -146,7 +152,7 @@ public class SQLCrudRepositoryImpl<T> implements SQLCrudRepository<T> {
         try {
             return sqlStoreService.update(toUpdateSQL(sqlStore, entity));
         } catch (IllegalAccessException e) {
-            throw new SQLQueryException(e.getMessage(), e);
+            throw new SQLQueryException(e);
         }
     }
 

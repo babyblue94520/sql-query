@@ -7,11 +7,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import pers.clare.core.sqlquery.page.Page;
 import pers.clare.core.sqlquery.page.Pagination;
+import pers.clare.core.sqlquery.page.Sort;
 import pers.clare.demo.data.entity.User;
 import pers.clare.demo.data.sql.UserQueryRepository;
 import pers.clare.demo.vo.User2;
 
 import java.util.Collection;
+import java.util.List;
 
 @RequestMapping("user/simple")
 @RestController
@@ -75,6 +77,13 @@ public class UserQueryController {
             Pagination pagination
     ) throws Exception {
         return userQueryRepository.findAllTime(pagination);
+    }
+
+    @GetMapping("sort")
+    public List<User> sort(
+            Sort sort
+    ) throws Exception {
+        return userQueryRepository.findAllId(sort);
     }
 
     @GetMapping("page/map")

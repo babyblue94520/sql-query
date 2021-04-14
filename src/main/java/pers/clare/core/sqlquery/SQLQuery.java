@@ -55,7 +55,7 @@ public class SQLQuery {
     public String toString(Pagination pagination) {
         StringBuilder sql = toSQL();
         if (pagination != null) {
-            SQLUtil.buildPaginationSQL(sql, pagination);
+            SQLUtil.appendPaginationSQL(sql, pagination);
         }
         return sql.toString();
     }

@@ -5,14 +5,15 @@ import pers.clare.core.sqlquery.exception.SQLQueryException;
 import pers.clare.core.sqlquery.function.ResultSetHandler;
 import pers.clare.core.sqlquery.page.Page;
 import pers.clare.core.sqlquery.page.Pagination;
+import pers.clare.core.sqlquery.page.Sort;
 import pers.clare.core.sqlquery.support.ConnectionReuse;
 import pers.clare.core.sqlquery.support.ConnectionReuseHolder;
-import pers.clare.core.sqlquery.util.PreparedStatementUtil;
 import pers.clare.core.sqlquery.util.ResultSetUtil;
 import pers.clare.core.sqlquery.util.SQLUtil;
 
 import javax.sql.DataSource;
 import java.sql.*;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -56,23 +57,29 @@ public class SQLService {
     }
 
     protected void close(Connection connection) {
+        if (connection == null) return;
         try {
             if (ConnectionReuseHolder.get() == null) {
                 connection.close();
             }
         } catch (Exception e) {
-            throw new SQLQueryException(e.getMessage(), e);
+            throw new SQLQueryException(e);
         }
     }
 
     protected ResultSet go(Connection connection, String sql, Object[] parameters) throws SQLException {
         log.debug(sql);
-        if (parameters.length == 0) {
-            return connection.createStatement().executeQuery(sql);
-        } else {
-            PreparedStatement ps = connection.prepareStatement(sql);
-            PreparedStatementUtil.setValue(ps, parameters);
-            return ps.executeQuery();
+        try {
+            if (parameters.length == 0) {
+                return connection.createStatement().executeQuery(sql);
+            } else {
+                PreparedStatement ps = connection.prepareStatement(sql);
+                setValue(ps, parameters);
+                return ps.executeQuery();
+            }
+        } catch (Exception e) {
+            log.error(sql);
+            throw e;
         }
     }
 
@@ -90,22 +97,31 @@ public class SQLService {
         } catch (SQLQueryException e) {
             throw e;
         } catch (Exception e) {
-            throw new SQLQueryException(e.getMessage(), e);
+            throw new SQLQueryException(e);
         } finally {
             close(connection);
         }
     }
 
-    protected long getTotal(
-            Connection connection
+    protected <T> Page<T> toPage(
+            Pagination pagination
+            , List<T> list
+            , Connection connection
             , String sql
             , Object[] parameters
     ) throws SQLException {
-        ResultSet rs = go(connection, SQLUtil.buildTotalSQL(sql), parameters);
-        if (rs.next()) {
-            return rs.getLong(1);
+        long total = list.size();
+        if (total < pagination.getSize()) {
+            total += pagination.getPage() * pagination.getSize();
+        } else {
+            ResultSet rs = go(connection, SQLUtil.buildTotalSQL(sql), parameters);
+            if (rs.next()) {
+                total = rs.getLong(1);
+            } else {
+                throw new SQLQueryException("query total error");
+            }
         }
-        throw new SQLQueryException("query total error");
+        return Page.of(pagination.getPage(), pagination.getSize(), list, total);
     }
 
     private <T, R> R doQueryHandler(
@@ -270,13 +286,11 @@ public class SQLService {
         try {
             connection = getConnection(readonly);
             List<T> list = ResultSetUtil.toList(clazz, go(connection, SQLUtil.buildPaginationSQL(pagination, sql), parameters));
-            long total = list.size();
-            if (total == pagination.getSize()) total = getTotal(connection, sql, parameters);
-            return Page.of(pagination.getPage(), pagination.getSize(), list, total);
+            return toPage(pagination, list, connection, sql, parameters);
         } catch (SQLQueryException e) {
             throw e;
         } catch (Exception e) {
-            throw new SQLQueryException(e.getMessage(), e);
+            throw new SQLQueryException(e);
         } finally {
             close(connection);
         }
@@ -302,13 +316,11 @@ public class SQLService {
         try {
             connection = getConnection(readonly);
             List<Map<String, T>> list = ResultSetUtil.toMapList(clazz, go(connection, SQLUtil.buildPaginationSQL(pagination, sql), parameters));
-            long total = list.size();
-            if (total == pagination.getSize()) total = getTotal(connection, sql, parameters);
-            return Page.of(pagination.getPage(), pagination.getSize(), list, total);
+            return toPage(pagination, list, connection, sql, parameters);
         } catch (SQLQueryException e) {
             throw e;
         } catch (Exception e) {
-            throw new SQLQueryException(e.getMessage(), e);
+            throw new SQLQueryException(e);
         } finally {
             close(connection);
         }
@@ -328,13 +340,13 @@ public class SQLService {
                 statement = connection.createStatement();
                 statement.execute(sql, Statement.RETURN_GENERATED_KEYS);
             } else {
-                statement = PreparedStatementUtil.executeInsert(connection, sql, parameters);
+                statement = executeInsert(connection, sql, parameters);
             }
             if (statement.getUpdateCount() == 0) return null;
             ResultSet rs = statement.getGeneratedKeys();
             return rs.next() ? rs.getObject(1, keyType) : null;
         } catch (SQLException e) {
-            throw new SQLQueryException(e.getMessage(), e);
+            throw new SQLQueryException(e);
         } finally {
             close(connection);
         }
@@ -352,14 +364,46 @@ public class SQLService {
                 return connection.createStatement().executeUpdate(sql);
             } else {
                 PreparedStatement ps = connection.prepareStatement(sql);
-                PreparedStatementUtil.setValue(ps, parameters);
+                setValue(ps, parameters);
                 return ps.executeUpdate();
             }
         } catch (SQLException e) {
-            throw new SQLQueryException(e.getMessage(), e);
+            throw new SQLQueryException(e);
         } finally {
             close(connection);
         }
     }
 
+    public static Statement executeInsert(
+            Connection conn
+            , String sql
+            , Object... parameters
+    ) throws SQLException {
+        if (parameters.length == 0) {
+            Statement statement = conn.createStatement();
+            statement.execute(sql, Statement.RETURN_GENERATED_KEYS);
+            return statement;
+        } else {
+            PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            int i = 1;
+            for (Object value : parameters) {
+                ps.setObject(i++, value);
+            }
+            ps.executeUpdate();
+            return ps;
+        }
+    }
+
+    public static int setValue(
+            PreparedStatement ps
+            , Object... parameters
+    ) throws SQLException {
+        int index = 1;
+        if (parameters == null || parameters.length == 0) return index;
+        for (Object value : parameters) {
+            if (value instanceof Pagination || value instanceof Sort) continue;
+            ps.setObject(index++, value);
+        }
+        return index;
+    }
 }
