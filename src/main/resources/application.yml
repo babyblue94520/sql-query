@@ -2,6 +2,7 @@
 spring:
   profiles:
     include:
+      - jpa
       - h2
 #      - mysql
     active: dev
@@ -43,6 +44,6 @@ management:
   info:
     git:
       mode: full
-#logging:
-#  level:
-#    pers.clare: debug
+logging:
+  level:
+    pers.clare: debug

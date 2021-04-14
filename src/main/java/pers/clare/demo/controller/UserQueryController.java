@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.RestController;
 import pers.clare.core.sqlquery.page.Page;
 import pers.clare.core.sqlquery.page.Pagination;
 import pers.clare.core.sqlquery.page.Sort;
+import pers.clare.demo.bo.UserPageQuery;
+import pers.clare.demo.bo.UserSortQuery;
 import pers.clare.demo.data.entity.User;
 import pers.clare.demo.data.sql.UserQueryRepository;
 import pers.clare.demo.vo.User2;
@@ -15,7 +17,7 @@ import pers.clare.demo.vo.User2;
 import java.util.Collection;
 import java.util.List;
 
-@RequestMapping("user/simple")
+@RequestMapping("user/query")
 @RestController
 public class UserQueryController {
 
@@ -109,6 +111,29 @@ public class UserQueryController {
                 , endTime
                 , id
                 , name
+        );
+    }
+
+
+    @GetMapping("page2")
+    public Page<User> page(
+            UserPageQuery query
+    ) throws Exception {
+        return userQueryRepository.page(
+                query.getId() == null ? "" : "and id = :query.id"
+                , StringUtils.isEmpty(query.getName()) ? "" : "and name like :query.name"
+                , query
+        );
+    }
+
+    @GetMapping("sort2")
+    public List<User> sort(
+            UserSortQuery query
+    ) throws Exception {
+        return userQueryRepository.sort(
+                query.getId() == null ? "" : "and id = :query.id"
+                , StringUtils.isEmpty(query.getName()) ? "" : "and name like :query.name"
+                , query
         );
     }
 

@@ -214,6 +214,9 @@ public class SQLQueryConfig {
             @Sql("select id from user")
             List<Long> findAllId(Pagination pagination);
         
+            @Sql("select * from user")
+            List<User> findAllId(Sort sort);
+  
             @Sql("select id,name from user limit 0,10")
             Set findAllSimpleSetMap();
         
@@ -258,6 +261,7 @@ public class SQLQueryConfig {
                     , Long id
                     , String name
             );
+            
         }
         ```
 
@@ -384,7 +388,40 @@ public class SQLQueryConfig {
             }
         }
         ```
+        
+        **進階使用**
+    
+        ```java
+        @Getter
+        @Setter
+        public class UserPageQuery {
+            private Pagination pagination;
+            private Long startTime;
+            private Long endTime;
+            private Long id;
+            private String name;
+        }
+      
+        @Getter
+        @Setter
+        public class UserSortQuery {
+            private Sort sort;
+            private Long startTime;
+            private Long endTime;
+            private Long id;
+            private String name;
+        }
+        
+        @Sql("select * from user where create_time between :query.startTime and :query.endTime {andId}{andName}")
+        Page<User> page(
+            String andId
+            , String andName
+            , UserPageQuery query
+        );
 
+        @Sql("select * from user where create_time between :query.startTime and :query.endTime {andId}{andName}")
+        List<User> sort(String andId, String andName, UserSortQuery query);
+        ```
 
 * 配置 **XML SQL**
 
@@ -521,8 +558,8 @@ public class SQLQueryConfig {
         public User findByIdUncommitted(Long id) {
             return userRepository.findById(id);
         }
+      
         ```
     
         ![](image/rollback.png)
-}
-
+      

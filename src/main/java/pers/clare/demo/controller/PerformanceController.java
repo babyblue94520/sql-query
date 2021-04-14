@@ -2,9 +2,11 @@ package pers.clare.demo.controller;
 
 import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.*;
 import pers.clare.core.sqlquery.page.Pagination;
 import pers.clare.demo.data.entity.User;
+import pers.clare.demo.data.jpa.UserJpaRepository;
 import pers.clare.demo.data.sql.UserQueryRepository;
 import pers.clare.demo.data.sql.UserRepository;
 import pers.clare.demo.service.UserService;
@@ -19,14 +21,38 @@ import java.util.function.Consumer;
 @RestController
 public class PerformanceController {
     @Autowired
-    private DataSource dataSource;
-    @Autowired
     private UserRepository userRepository;
     @Autowired
     private UserQueryRepository userQueryRepository;
+    @Autowired
+    private UserJpaRepository userJpaRepository;
 
     @Autowired
     private UserService userService;
+
+    @GetMapping("jpa/page")
+    public String jpaPage(
+            @ApiParam(value = "執行緒數量", example = "8")
+            @RequestParam(required = false, defaultValue = "8") final int thread
+            , @ApiParam(value = "數量", example = "100")
+            @RequestParam(required = false, defaultValue = "100") final int max
+    ) throws Exception {
+        return run(thread, max, (i) -> userJpaRepository.findAll(PageRequest.of(0,1)));
+    }
+
+    @GetMapping("jpa/insert")
+    public String jpaInsert(
+            @ApiParam(value = "執行緒數量", example = "8")
+            @RequestParam(required = false, defaultValue = "8") final int thread
+            , @ApiParam(value = "數量", example = "100")
+            @RequestParam(required = false, defaultValue = "100") final int max
+    ) throws Exception {
+        return run(thread, max, (i) -> userJpaRepository.save(User.builder()
+                .account(Thread.currentThread().getName() + i)
+                .name(Thread.currentThread().getName())
+                .build()
+        ));
+    }
 
     @GetMapping("sql/page")
     public String page(

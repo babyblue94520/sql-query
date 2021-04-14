@@ -1,25 +1,25 @@
 package pers.clare.core.sqlquery.method;
 
 import org.aopalliance.intercept.MethodInvocation;
+import pers.clare.core.sqlquery.SQLQuery;
 import pers.clare.core.sqlquery.page.Pagination;
 
 public abstract class PageMethod extends SQLMethod {
 
     @Override
     public Object invoke(MethodInvocation methodInvocation) {
-        Pagination pagination = (Pagination) methodInvocation.getArguments()[paginationIndex];
+        Object[] arguments = methodInvocation.getArguments();
+        Pagination pagination = getPagination(arguments);
+        SQLQuery query = null;
         if (sqlQueryReplaceBuilder != null) {
-            return doInvoke(toSql(sqlQueryReplaceBuilder, methodInvocation, null), pagination, emptyArguments);
+            query = toSqlQuery(sqlQueryReplaceBuilder, arguments);
         } else if (sqlQueryBuilder != null) {
-            return doInvoke(toSql(sqlQueryBuilder, methodInvocation, null), pagination, emptyArguments);
-        } else {
-            Object[] arguments = new Object[methodInvocation.getArguments().length - 1];
-            int index = 0;
-            for (Object argument : methodInvocation.getArguments()) {
-                if (index == paginationIndex) continue;
-                arguments[index++] = argument;
-            }
+            query = toSqlQuery(sqlQueryBuilder, arguments);
+        }
+        if (query == null) {
             return doInvoke(sql, pagination, arguments);
+        } else {
+            return doInvoke(query.toString(), pagination, emptyArguments);
         }
     }
 

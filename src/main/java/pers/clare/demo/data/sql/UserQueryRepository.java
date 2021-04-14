@@ -6,6 +6,8 @@ import pers.clare.core.sqlquery.page.Page;
 import pers.clare.core.sqlquery.page.Pagination;
 import pers.clare.core.sqlquery.page.Sort;
 import pers.clare.core.sqlquery.repository.SQLRepository;
+import pers.clare.demo.bo.UserPageQuery;
+import pers.clare.demo.bo.UserSortQuery;
 import pers.clare.demo.data.entity.User;
 import pers.clare.demo.vo.SimpleUser;
 import pers.clare.demo.vo.User2;
@@ -55,6 +57,7 @@ public interface UserQueryRepository extends SQLRepository {
     @Sql("select * from user")
     Page<Map> mapPage(Pagination pagination);
 
+
     @Sql("select * from user where create_time between :startTime and :endTime {andId}{andName}")
     Page<User> page(
             String andId
@@ -87,4 +90,14 @@ public interface UserQueryRepository extends SQLRepository {
             , Long id
             , String name
     );
+
+    @Sql("select * from user where create_time between :query.startTime and :query.endTime {andId}{andName}")
+    Page<User> page(
+            String andId
+            , String andName
+            , UserPageQuery query
+    );
+
+    @Sql("select * from user where create_time between :query.startTime and :query.endTime {andId}{andName}")
+    List<User> sort(String andId, String andName, UserSortQuery query);
 }

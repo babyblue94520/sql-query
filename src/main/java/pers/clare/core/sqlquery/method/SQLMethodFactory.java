@@ -31,7 +31,6 @@ public class SQLMethodFactory {
         Map<Method, MethodInterceptor> methodInterceptors = new HashMap<>();
         String command;
         SQLMethod sqlMethod;
-        Class<?>[] parameterTypes;
         for (Method method : methods) {
             command = findSqlCommand(contents, method);
             if (command == null) {
@@ -44,16 +43,6 @@ public class SQLMethodFactory {
             sqlMethod.setMethod(method);
             sqlMethod.setSql(command);
             sqlMethod.setSqlStoreService(sqlStoreService);
-            parameterTypes = method.getParameterTypes();
-            for (int i = 0, l = method.getParameterTypes().length; i < l; i++) {
-                if (parameterTypes[i] == Pagination.class) {
-                    sqlMethod.setPaginationIndex(i);
-                    break;
-                } else if (parameterTypes[i] == Sort.class) {
-                    sqlMethod.setSortIndex(i);
-                    break;
-                }
-            }
             methodInterceptors.put(method, sqlMethod);
         }
         return methodInterceptors;

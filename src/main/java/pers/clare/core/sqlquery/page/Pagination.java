@@ -13,6 +13,8 @@ public class Pagination {
         return new Pagination(page, size, sorts);
     }
 
+    public Pagination(){}
+
     public Pagination(Integer page, Integer size, String[] sorts) {
         this.page = page;
         this.size = size;
@@ -33,5 +35,17 @@ public class Pagination {
 
     public Pagination next() {
         return Pagination.of(page + 1, size, sorts);
+    }
+
+    public void setPage(Integer page) {
+        this.page = page;
+    }
+
+    public void setSize(Integer size) {
+        this.size = size;
+    }
+
+    public void setSorts(String[] sorts) {
+        this.sorts = sorts;
     }
 }
